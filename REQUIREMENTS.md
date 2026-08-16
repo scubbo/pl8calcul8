@@ -23,7 +23,11 @@ conflicts with SPEC.md, this document wins.
 ## RPE calculation
 
 * Ratio table: the RTS/Tuchscherer RPE chart (percentage of e1RM by
-  rep-count × RPE, half-integer RPEs supported).
+  rep-count × RPE, half-integer RPEs supported). Jack verified the embedded
+  table against his copy. Extended with a derived RPE 6 column using the
+  reps-in-reserve diagonal (n@6 == (n+1)@7); 12@6 extrapolated to 57.4%.
+* Assigned RPE (exercise definitions): whole numbers 6-10 only.
+* Recorded RPE (results): half-steps 6.5-10.
 * Advice input: the single recorded weight/RPE of the most recent completed
   exercise for that lift.
 * Advice algorithm:
@@ -42,6 +46,12 @@ conflicts with SPEC.md, this document wins.
 * Active session companion: start a session → enter exercise definitions via
   pickers → see advised weights → record actual weight/RPE/notes per exercise
   as the session progresses.
+* Picker order: Sets → Reps → RPE.
+* Numeric inputs (sets/reps/RPE/weight) are vertical spinners, not
+  dropdowns or free text. Weight spinner moves in 2.5lb steps, defaulting
+  to the advised weight (or a 45lb bar when there's no advice).
+* The lift dropdown includes a "New Lift…" entry to create a lift
+  mid-session (default 5lb increment).
 
 ## History
 
@@ -61,6 +71,9 @@ conflicts with SPEC.md, this document wins.
 * CSV export
 * Dark mode
 * Web interface for viewing history
+* Custom app icon (currently the default Android icon)
+* In-progress session survives process death (currently a killed app loses
+  an unfinished workout; ViewModel state only survives rotation)
 
 ## Constraints
 

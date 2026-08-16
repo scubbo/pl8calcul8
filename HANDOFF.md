@@ -1,0 +1,64 @@
+# Session handoff notes
+
+State snapshot for resuming development after machine restart.
+Last updated: 2026-08-16.
+
+## Current state
+
+* All committed through `c8eb60f` on `main`. Working tree should be clean
+  except this file and REQUIREMENTS.md edits (commit them).
+* 18 JVM unit tests + 5 instrumented DB tests, all passing.
+* **NEXT IMMEDIATE STEP**: the session-UX feedback changes in commit
+  `c8eb60f` (spinners, Sets/Reps/RPE order, integer assigned RPE,
+  New Lift… flow) compile and pass unit tests but were NEVER verified
+  visually on the emulator. Boot the emulator, `installDebug`, and walk
+  the add-exercise + record-result flow before building anything new.
+* After that: History screen (graphs + table; DAO query
+  `historyForLift` already exists), then Settings (manage lifts /
+  increments, backup buttons), then Ktor server, then phone sideload.
+
+## Environment / commands
+
+* Build JDK is Android Studio's bundled JBR (JDK 25). Every gradle command
+  needs: `export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"`
+* SDK at `~/Library/Android/sdk` (referenced by `local.properties`, which is
+  gitignored — recreate with `sdk.dir=/Users/scubbo/Library/Android/sdk` if lost).
+* Start emulator:
+  `~/Library/Android/sdk/emulator/emulator -avd pl8phone &`
+  (AVD `pl8phone` = Pixel 7, Android 16/API 36, x86_64. `hw.keyboard=yes`
+  was set in `~/.android/avd/pl8phone.avd/config.ini` so the Mac keyboard
+  types into the emulator.)
+* Install + launch app:
+  `./gradlew installDebug && ~/Library/Android/sdk/platform-tools/adb shell am start -n com.scubbo.pl8calcul8/.MainActivity`
+* Unit tests: `./gradlew testDebugUnitTest`
+* On-device tests: `./gradlew connectedDebugAndroidTest`
+  **WARNING**: this uninstalls the app (and its database) afterward —
+  run `installDebug` again after.
+
+## Gotchas discovered
+
+* AGP 9 has built-in Kotlin: do NOT apply `org.jetbrains.kotlin.android`
+  (build fails). `org.jetbrains.kotlin.plugin.compose` and KSP still apply.
+* Jack's global gitignore excludes `gradle/`, `gradlew`; repo .gitignore
+  overrides with `!gradle/` etc. If a gradle-file commit is mysteriously
+  missing files, check ignores.
+* Emulator on this Intel Mac is slow to cold-boot and throws harmless
+  system ANR dialogs ("Process system isn't responding") — hit Wait.
+* Don't launch a second emulator before the first fully exits
+  (single-AVD lock).
+* Latest-version lookups: query
+  `https://dl.google.com/android/maven2/<group>/<artifact>/maven-metadata.xml`
+  (AndroidX/AGP) or Maven Central metadata (Kotlin/KSP) instead of trusting
+  training data. Current pins in `gradle/libs.versions.toml`.
+* Ollama isn't running on this machine, so hivemind memory store fails —
+  persist notes to files instead.
+
+## Design decisions (full detail in REQUIREMENTS.md)
+
+* RPE chart embedded in `RpeCalculator.kt`, verified by Jack; RPE 6 column
+  derived via diagonal, 12@6 extrapolated 57.4%.
+* Assigned RPE integers 6-10; recorded RPE half-steps 6.5-10.
+* Weight advice: most recent exercise -> e1RM -> target + per-lift
+  increment -> round to nearest 5, ties down.
+* Exercise = one weight+RPE per exercise (not per set); reps assumed
+  as assigned; notes for deviations.
