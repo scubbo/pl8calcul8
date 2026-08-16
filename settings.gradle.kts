@@ -20,6 +20,10 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "pl8calcul8"
-include(":app")
+// The app module needs an Android SDK to even configure; skip it where none
+// exists (e.g. the server's Docker build).
+if (File(rootDir, "local.properties").exists() || System.getenv("ANDROID_HOME") != null) {
+    include(":app")
+}
 include(":shared")
 include(":server")
