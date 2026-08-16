@@ -1,5 +1,9 @@
 *.iml
 .gradle/
+# Override ~/.gitignore_global: the Gradle wrapper belongs in this repo
+!gradle/
+!gradlew
+!gradlew.bat
 local.properties
 .idea/
 .DS_Store
