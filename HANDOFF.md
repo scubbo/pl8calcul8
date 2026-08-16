@@ -8,14 +8,14 @@ Last updated: 2026-08-16.
 * All committed through `c8eb60f` on `main`. Working tree should be clean
   except this file and REQUIREMENTS.md edits (commit them).
 * 18 JVM unit tests + 5 instrumented DB tests, all passing.
-* **NEXT IMMEDIATE STEP**: the session-UX feedback changes in commit
-  `c8eb60f` (spinners, Sets/Reps/RPE order, integer assigned RPE,
-  New Lift… flow) compile and pass unit tests but were NEVER verified
-  visually on the emulator. Boot the emulator, `installDebug`, and walk
-  the add-exercise + record-result flow before building anything new.
-* After that: History screen (graphs + table; DAO query
-  `historyForLift` already exists), then Settings (manage lifts /
-  increments, backup buttons), then Ktor server, then phone sideload.
+* Session-UX feedback changes (spinners, Sets/Reps/RPE order, integer
+  assigned RPE, New Lift… flow) are verified on-emulator, all working.
+* NEXT: History screen (graphs + table; DAO query `historyForLift`
+  already exists), then Settings (manage lifts / increments, backup
+  buttons), then Ktor server, then phone sideload.
+* Emulator UI automation tip: don't tap blind coordinates (dialogs shift
+  when the keyboard opens). Use `/tmp/tap.py`-style uiautomator dumps to
+  find widget bounds by text, or re-dump after IME changes.
 
 ## Environment / commands
 
@@ -23,8 +23,12 @@ Last updated: 2026-08-16.
   needs: `export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"`
 * SDK at `~/Library/Android/sdk` (referenced by `local.properties`, which is
   gitignored — recreate with `sdk.dir=/Users/scubbo/Library/Android/sdk` if lost).
-* Start emulator:
-  `~/Library/Android/sdk/emulator/emulator -avd pl8phone &`
+* Start emulator — the `-feature -Vulkan` flag is REQUIRED on this machine:
+  `~/Library/Android/sdk/emulator/emulator -avd pl8phone -feature -Vulkan &`
+  Without it, Android 16's UI renders Vulkan-on-SwiftShader (software):
+  frames take seconds, apps ANR ("Input dispatching timed out" while main
+  thread is Runnable inside Compose draw), and the whole Mac slows down.
+  With the flag, rendering falls back to host-accelerated OpenGL.
   (AVD `pl8phone` = Pixel 7, Android 16/API 36, x86_64. `hw.keyboard=yes`
   was set in `~/.android/avd/pl8phone.avd/config.ini` so the Mac keyboard
   types into the emulator.)
