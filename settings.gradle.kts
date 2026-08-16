@@ -21,3 +21,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "pl8calcul8"
 include(":app")
+include(":shared")
+include(":server")
