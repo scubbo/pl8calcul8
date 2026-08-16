@@ -150,6 +150,17 @@ class SessionViewModelTest {
     }
 
     @Test
+    fun `a new lift can be created mid-session`() = runTest {
+        val created = vm.addLift("  Front Squat ")
+
+        assertEquals("Front Squat", created.name)
+        assertEquals(5.0, created.incrementLb, 1e-9)
+        val stored = liftDao.lifts.value.single()
+        assertEquals(created.id, stored.id)
+        assertEquals("Front Squat", stored.name)
+    }
+
+    @Test
     fun `finishing with nothing recorded saves nothing`() = runTest {
         val bench = Lift(id = 1, name = "Bench Press")
         vm.addExercise(bench, reps = 4, rpe = 7.0, sets = 3)

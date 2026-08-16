@@ -23,6 +23,16 @@ class RpeChartTest {
     }
 
     @Test
+    fun `RPE 6 column follows the reps-in-reserve diagonal`() {
+        // n reps @6 leaves the same reps in reserve as (n+1) reps @7
+        assertEquals(RpeChart.percentage(reps = 2, rpe = 7.0), RpeChart.percentage(reps = 1, rpe = 6.0), 1e-9)
+        assertEquals(RpeChart.percentage(reps = 6, rpe = 7.0), RpeChart.percentage(reps = 5, rpe = 6.0), 1e-9)
+        assertEquals(RpeChart.percentage(reps = 12, rpe = 7.0), RpeChart.percentage(reps = 11, rpe = 6.0), 1e-9)
+        // No 13-rep row exists to derive from; extrapolated
+        assertEquals(0.574, RpeChart.percentage(reps = 12, rpe = 6.0), 1e-9)
+    }
+
+    @Test
     fun `reps outside 1-12 are rejected`() {
         assertThrows(IllegalArgumentException::class.java) {
             RpeChart.percentage(reps = 0, rpe = 8.0)
@@ -33,9 +43,9 @@ class RpeChartTest {
     }
 
     @Test
-    fun `RPE outside 6_5-10 or off the half-step grid is rejected`() {
+    fun `RPE outside 6-10 or off the half-step grid is rejected`() {
         assertThrows(IllegalArgumentException::class.java) {
-            RpeChart.percentage(reps = 5, rpe = 6.0)
+            RpeChart.percentage(reps = 5, rpe = 5.5)
         }
         assertThrows(IllegalArgumentException::class.java) {
             RpeChart.percentage(reps = 5, rpe = 10.5)

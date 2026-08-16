@@ -12,23 +12,25 @@ import kotlin.math.ceil
 object RpeChart {
     const val MIN_REPS = 1
     const val MAX_REPS = 12
-    const val MIN_RPE = 6.5
+    const val MIN_RPE = 6.0
     const val MAX_RPE = 10.0
 
-    // Rows are reps 1..12; columns are RPE 10, 9.5, 9, ... 6.5.
+    // Rows are reps 1..12; columns are RPE 10, 9.5, 9, ... 6.0.
+    // The published RTS chart stops at 6.5; the 6.0 column is derived from
+    // the diagonal (n@6 == (n+1)@7), except 12@6 which is extrapolated.
     private val percentages = arrayOf(
-        doubleArrayOf(100.0, 97.8, 95.5, 93.9, 92.2, 90.7, 89.2, 87.8),
-        doubleArrayOf(95.5, 93.9, 92.2, 90.7, 89.2, 87.8, 86.3, 85.0),
-        doubleArrayOf(92.2, 90.7, 89.2, 87.8, 86.3, 85.0, 83.7, 82.4),
-        doubleArrayOf(89.2, 87.8, 86.3, 85.0, 83.7, 82.4, 81.1, 79.9),
-        doubleArrayOf(86.3, 85.0, 83.7, 82.4, 81.1, 79.9, 78.6, 77.4),
-        doubleArrayOf(83.7, 82.4, 81.1, 79.9, 78.6, 77.4, 76.2, 75.1),
-        doubleArrayOf(81.1, 79.9, 78.6, 77.4, 76.2, 75.1, 73.9, 72.3),
-        doubleArrayOf(78.6, 77.4, 76.2, 75.1, 73.9, 72.3, 70.7, 69.4),
-        doubleArrayOf(76.2, 75.1, 73.9, 72.3, 70.7, 69.4, 68.0, 66.7),
-        doubleArrayOf(73.9, 72.3, 70.7, 69.4, 68.0, 66.7, 65.3, 64.0),
-        doubleArrayOf(70.7, 69.4, 68.0, 66.7, 65.3, 64.0, 62.6, 61.3),
-        doubleArrayOf(68.0, 66.7, 65.3, 64.0, 62.6, 61.3, 59.9, 58.6),
+        doubleArrayOf(100.0, 97.8, 95.5, 93.9, 92.2, 90.7, 89.2, 87.8, 86.3),
+        doubleArrayOf(95.5, 93.9, 92.2, 90.7, 89.2, 87.8, 86.3, 85.0, 83.7),
+        doubleArrayOf(92.2, 90.7, 89.2, 87.8, 86.3, 85.0, 83.7, 82.4, 81.1),
+        doubleArrayOf(89.2, 87.8, 86.3, 85.0, 83.7, 82.4, 81.1, 79.9, 78.6),
+        doubleArrayOf(86.3, 85.0, 83.7, 82.4, 81.1, 79.9, 78.6, 77.4, 76.2),
+        doubleArrayOf(83.7, 82.4, 81.1, 79.9, 78.6, 77.4, 76.2, 75.1, 73.9),
+        doubleArrayOf(81.1, 79.9, 78.6, 77.4, 76.2, 75.1, 73.9, 72.3, 70.7),
+        doubleArrayOf(78.6, 77.4, 76.2, 75.1, 73.9, 72.3, 70.7, 69.4, 68.0),
+        doubleArrayOf(76.2, 75.1, 73.9, 72.3, 70.7, 69.4, 68.0, 66.7, 65.3),
+        doubleArrayOf(73.9, 72.3, 70.7, 69.4, 68.0, 66.7, 65.3, 64.0, 62.6),
+        doubleArrayOf(70.7, 69.4, 68.0, 66.7, 65.3, 64.0, 62.6, 61.3, 59.9),
+        doubleArrayOf(68.0, 66.7, 65.3, 64.0, 62.6, 61.3, 59.9, 58.6, 57.4),
     )
 
     /** Fraction of 1RM (e.g. 0.811) for the given reps and RPE. */

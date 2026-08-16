@@ -31,7 +31,7 @@ data class PlannedExercise(
 )
 
 class SessionViewModel(
-    liftDao: LiftDao,
+    private val liftDao: LiftDao,
     private val workoutDao: WorkoutDao,
     private val clock: () -> Long = System::currentTimeMillis,
 ) : ViewModel() {
@@ -40,6 +40,12 @@ class SessionViewModel(
 
     private val _planned = MutableStateFlow<List<PlannedExercise>>(emptyList())
     val planned: StateFlow<List<PlannedExercise>> = _planned.asStateFlow()
+
+    suspend fun addLift(name: String): Lift {
+        val lift = Lift(name = name.trim())
+        val id = liftDao.insert(lift)
+        return lift.copy(id = id)
+    }
 
     suspend fun addExercise(lift: Lift, reps: Int, rpe: Double, sets: Int) {
         val previous = workoutDao.mostRecentExerciseForLift(lift.id)
