@@ -55,8 +55,15 @@ conflicts with SPEC.md, this document wins.
 
 ## History
 
-* Per lift: graph of calculated 1RM over time, graph of actual weight over
-  time, and a scrollable table of past exercises.
+* Two modes:
+  * Single lift: graph of calculated 1RM over time, graph of total weight
+    lifted over time, and a scrollable table of past exercises.
+  * Compare lifts: select any number of lifts (filter chips) and graph
+    either estimated 1RM or total weight lifted for all of them on one
+    chart with a legend.
+* "Total weight lifted" means tonnage: weight × reps × sets per exercise.
+* Dev convenience: `scripts/seed-emulator.sh` fills the emulator DB with
+  8 weeks of plausible history.
 
 ## Backup / server
 
