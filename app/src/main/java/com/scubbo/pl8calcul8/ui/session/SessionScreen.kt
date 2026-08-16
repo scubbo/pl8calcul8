@@ -14,10 +14,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -39,6 +35,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.scubbo.pl8calcul8.calc.RpeChart
 import com.scubbo.pl8calcul8.data.AppDatabase
 import com.scubbo.pl8calcul8.data.Lift
+import com.scubbo.pl8calcul8.ui.components.LiftDropdown
 import kotlinx.coroutines.launch
 
 private val ASSIGNED_RPE_OPTIONS: List<Double> = (6..10).map { it.toDouble() }
@@ -327,48 +324,6 @@ private fun NewLiftDialog(
             TextButton(onClick = onDismiss) { Text("Cancel") }
         },
     )
-}
-
-@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
-@Composable
-private fun LiftDropdown(
-    lifts: List<Lift>,
-    selected: Lift?,
-    onSelect: (Lift) -> Unit,
-    onNewLift: () -> Unit,
-) {
-    var expanded by remember { mutableStateOf(false) }
-    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
-        OutlinedTextField(
-            value = selected?.name ?: "Select a lift",
-            onValueChange = {},
-            readOnly = true,
-            label = { Text("Lift") },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier
-                .menuAnchor(androidx.compose.material3.MenuAnchorType.PrimaryNotEditable)
-                .fillMaxWidth(),
-        )
-        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            lifts.forEach { lift ->
-                DropdownMenuItem(
-                    text = { Text(lift.name) },
-                    onClick = {
-                        onSelect(lift)
-                        expanded = false
-                    },
-                )
-            }
-            HorizontalDivider()
-            DropdownMenuItem(
-                text = { Text("New Lift…") },
-                onClick = {
-                    expanded = false
-                    onNewLift()
-                },
-            )
-        }
-    }
 }
 
 /**

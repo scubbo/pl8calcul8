@@ -16,6 +16,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.scubbo.pl8calcul8.ui.HomeScreen
+import com.scubbo.pl8calcul8.ui.history.HistoryScreen
 import com.scubbo.pl8calcul8.ui.session.SessionScreen
 
 class MainActivity : ComponentActivity() {
@@ -47,7 +48,7 @@ fun AppNavigation() {
         composable("session") {
             SessionScreen(onFinished = { navController.popBackStack() })
         }
-        composable("history") { PlaceholderScreen("History — coming soon") }
+        composable("history") { HistoryScreen() }
         composable("settings") { PlaceholderScreen("Settings — coming soon") }
     }
 }
