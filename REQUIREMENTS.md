@@ -65,6 +65,14 @@ conflicts with SPEC.md, this document wins.
 * Dev convenience: `scripts/seed-emulator.sh` fills the emulator DB with
   8 weeks of plausible history.
 
+## Settings
+
+* Lift list showing each lift's increment; tap to edit the increment
+  (spinner, 0-25lb in 2.5 steps). Add-lift button.
+* No lift rename/delete in v1 (delete is blocked by exercise history;
+  rename raises data-identity questions).
+* Backup/Restore buttons live here, disabled until the server exists.
+
 ## Backup / server
 
 * Manual "Backup now" and "Restore" buttons in the app.

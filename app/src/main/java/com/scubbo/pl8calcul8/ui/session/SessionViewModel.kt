@@ -6,6 +6,7 @@ import com.scubbo.pl8calcul8.data.Exercise
 import com.scubbo.pl8calcul8.data.Lift
 import com.scubbo.pl8calcul8.data.LiftDao
 import com.scubbo.pl8calcul8.data.Workout
+import com.scubbo.pl8calcul8.data.createLift
 import com.scubbo.pl8calcul8.data.WorkoutDao
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -41,11 +42,7 @@ class SessionViewModel(
     private val _planned = MutableStateFlow<List<PlannedExercise>>(emptyList())
     val planned: StateFlow<List<PlannedExercise>> = _planned.asStateFlow()
 
-    suspend fun addLift(name: String): Lift {
-        val lift = Lift(name = name.trim())
-        val id = liftDao.insert(lift)
-        return lift.copy(id = id)
-    }
+    suspend fun addLift(name: String): Lift = liftDao.createLift(name)
 
     suspend fun addExercise(lift: Lift, reps: Int, rpe: Double, sets: Int) {
         val previous = workoutDao.mostRecentExerciseForLift(lift.id)

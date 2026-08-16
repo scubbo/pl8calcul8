@@ -12,6 +12,15 @@ interface LiftDao {
 
     @Query("SELECT * FROM Lift ORDER BY name")
     fun all(): Flow<List<Lift>>
+
+    @Query("UPDATE Lift SET incrementLb = :incrementLb WHERE id = :liftId")
+    suspend fun updateIncrement(liftId: Long, incrementLb: Double)
+}
+
+/** Creates a lift with the default increment, returning it with its new id. */
+suspend fun LiftDao.createLift(name: String): Lift {
+    val lift = Lift(name = name.trim())
+    return lift.copy(id = insert(lift))
 }
 
 /** One row of a lift's history: a completed exercise with its workout date. */

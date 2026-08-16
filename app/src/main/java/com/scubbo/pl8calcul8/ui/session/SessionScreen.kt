@@ -36,6 +36,8 @@ import com.scubbo.pl8calcul8.calc.RpeChart
 import com.scubbo.pl8calcul8.data.AppDatabase
 import com.scubbo.pl8calcul8.data.Lift
 import com.scubbo.pl8calcul8.ui.components.LiftDropdown
+import com.scubbo.pl8calcul8.ui.components.NewLiftDialog
+import com.scubbo.pl8calcul8.ui.components.NumberSpinner
 import kotlinx.coroutines.launch
 
 private val ASSIGNED_RPE_OPTIONS: List<Double> = (6..10).map { it.toDouble() }
@@ -294,68 +296,4 @@ private fun AddExerciseDialog(
     }
 }
 
-@Composable
-private fun NewLiftDialog(
-    onCreate: (name: String) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    var name by remember { mutableStateOf("") }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("New lift") },
-        text = {
-            OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
-                label = { Text("Name") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-            )
-        },
-        confirmButton = {
-            TextButton(
-                onClick = { onCreate(name) },
-                enabled = name.isNotBlank(),
-            ) {
-                Text("Create")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
-        },
-    )
-}
 
-/**
- * A vertical spinner for picking from a fixed list of values, backed by the
- * classic Android NumberPicker widget (Compose has no built-in equivalent).
- */
-@Composable
-private fun <T> NumberSpinner(
-    label: String,
-    options: List<T>,
-    selected: T,
-    display: (T) -> String,
-    onSelect: (T) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val labels = remember(options) { options.map(display).toTypedArray() }
-    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(label, style = MaterialTheme.typography.labelMedium)
-        AndroidView(
-            factory = { context ->
-                NumberPicker(context).apply {
-                    minValue = 0
-                    displayedValues = labels
-                    maxValue = labels.size - 1
-                    wrapSelectorWheel = false
-                    setOnValueChangedListener { _, _, newIndex -> onSelect(options[newIndex]) }
-                }
-            },
-            update = { picker ->
-                val index = options.indexOf(selected)
-                if (index >= 0 && picker.value != index) picker.value = index
-            },
-        )
-    }
-}

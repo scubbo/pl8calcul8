@@ -105,6 +105,16 @@ class AppDatabaseTest {
     }
 
     @Test
+    fun incrementUpdatePersists() = runBlocking {
+        val liftId = db.liftDao().insert(Lift(name = "Squat"))
+
+        db.liftDao().updateIncrement(liftId, 10.0)
+
+        val lift = db.liftDao().all().first().single()
+        assertEquals(10.0, lift.incrementLb, 1e-9)
+    }
+
+    @Test
     fun seedCallbackPopulatesDefaultLifts() = runBlocking {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val seeded = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java)

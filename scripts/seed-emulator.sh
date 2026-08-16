@@ -14,7 +14,7 @@ DB="/data/data/$PKG/databases/pl8calcul8.db"
 "$ADB" root >/dev/null
 sleep 1
 if ! "$ADB" shell "ls $DB" >/dev/null 2>&1; then
-    echo "error: $DB not found - install and launch the app once first" >&2
+    echo "error: $DB not found - install the app and open a data screen (Settings is quickest) so Room creates the database" >&2
     exit 1
 fi
 "$ADB" shell am force-stop "$PKG"
