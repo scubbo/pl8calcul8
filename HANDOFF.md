@@ -14,12 +14,14 @@ Last updated: 2026-08-16.
 * Redeploying app updates to the phone: plug in via USB, then
   `./gradlew assembleDebug && adb -s <serial> install -r app/build/outputs/apk/debug/app-debug.apk`
   (BUT: moving to release-signed builds via Obtainium — see docs/RELEASING.md)
-* Release pipeline LIVE and verified: v0.2 published by CI, APK cert
-  matches the release keystore, versionCode from commit count. Operating
-  guide: docs/RELEASING.md. REMAINING (needs phone): uninstall debug
-  build, install Obtainium (/tmp/obtainium.apk staged, or download
-  on-device), add scubbo/pl8calcul8 in Obtainium -> installs v0.2,
-  re-enter server URL + token.
+* Release pipeline LIVE: v0.2 on the phone via Obtainium. Operating
+  guide: docs/RELEASING.md.
+* Web UI shipped (server / endpoint + auth'd /history). Deploy
+  automation: server image builds open a PR in homelab-configuration
+  (its main is protected); merging deploys via ArgoCD.
+* pl8calcul8 main is protected (ruleset protect-main): PRs + 1 approval
+  required, admin (Jack) bypasses. Agent pushes from this machine count
+  as Jack - push only when instructed.
 * WARNING: never run connectedAndroidTest with the phone plugged in —
   it uninstalls the app from ALL devices (wiped Jack's phone once).
   Always ANDROID_SERIAL=emulator-5554.
