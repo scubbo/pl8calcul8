@@ -12,15 +12,33 @@ android {
         applicationId = "com.scubbo.pl8calcul8"
         minSdk = 29
         targetSdk = 37
-        versionCode = 1
-        versionName = "0.1"
+        // Overridden by CI on release builds (see docs/RELEASING.md).
+        versionCode = (project.findProperty("versionCode") as String?)?.toInt() ?: 1
+        versionName = (project.findProperty("versionName") as String?) ?: "dev"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    // Release signing comes from environment variables so the keystore and
+    // its password never live in the repo (see docs/RELEASING.md).
+    val releaseKeystore = System.getenv("RELEASE_KEYSTORE")
+    if (releaseKeystore != null) {
+        signingConfigs {
+            create("release") {
+                storeFile = file(releaseKeystore)
+                storePassword = System.getenv("RELEASE_KEYSTORE_PASSWORD")
+                keyAlias = "pl8calcul8"
+                keyPassword = System.getenv("RELEASE_KEYSTORE_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
+            if (releaseKeystore != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
     compileOptions {

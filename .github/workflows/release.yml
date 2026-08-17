@@ -1,0 +1,46 @@
+name: Release app
+
+# Cutting a release: tag a commit `vX.Y` and push the tag.
+# Full walkthrough in docs/RELEASING.md.
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # to create the GitHub Release
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history: versionCode is the commit count
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Decode release keystore
+        run: echo "${{ secrets.RELEASE_KEYSTORE_B64 }}" | base64 -d > release.keystore
+
+      - name: Build signed release APK
+        env:
+          RELEASE_KEYSTORE: ${{ github.workspace }}/release.keystore
+          RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+        run: |
+          VERSION_CODE=$(git rev-list --count HEAD)
+          VERSION_NAME=${GITHUB_REF_NAME#v}
+          ./gradlew :app:assembleRelease \
+            -PversionCode="$VERSION_CODE" \
+            -PversionName="$VERSION_NAME"
+          mv app/build/outputs/apk/release/app-release.apk \
+             pl8calcul8-"$VERSION_NAME".apk
+
+      - name: Create GitHub Release with APK
+        uses: softprops/action-gh-release@v2
+        with:
+          files: pl8calcul8-*.apk
+          generate_release_notes: true
