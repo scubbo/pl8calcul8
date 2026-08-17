@@ -85,9 +85,10 @@ conflicts with SPEC.md, this document wins.
 * Rest timer
 * CSV export
 * Dark mode
-* Custom app icon (currently the default Android icon)
-* In-progress session survives process death (currently a killed app loses
-  an unfinished workout; ViewModel state only survives rotation)
+* Automatic backup after each workout; last-backup timestamp in Settings
+* Bodyweight tracking (manual or via Health Connect), feeding
+  Symmetric Strength-style scores (strength levels + muscle balance)
+* Auto-merge of signed deployment PRs in homelab-configuration
 
 ## Constraints
 

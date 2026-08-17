@@ -85,6 +85,24 @@ Last updated: 2026-08-16.
 * Ollama isn't running on this machine, so hivemind memory store fails —
   persist notes to files instead.
 
+## Jack's ideas for next session (2026-08-17, in his words + notes)
+
+1. **Auto-merge automation PRs in homelab-configuration** when
+   "cryptographically signed as being from this automation".
+   Design note: commits pushed via plain git from Actions are NOT signed.
+   But commits created via the GitHub API are automatically GPG-signed by
+   GitHub with the App as author. So: switch the deploy job to create its
+   commit via API (not git push), then a homelab-configuration ruleset/
+   workflow can require verified signatures + author == deployment app
+   and auto-approve/merge only those PRs.
+2. **Track bodyweight** (manual entry, or pull from Google Health -
+   on Android that's the Health Connect API) as an input to...
+3. **...Symmetric Strength-style calculations**: strength scores per
+   lift normalized by bodyweight/sex/age, strength-level classifications,
+   and muscle-balance ratios between lifts. Needs research into their
+   formulas (allometric scaling) and standards tables - find or derive
+   before building. Depends on (2) for bodyweight.
+
 ## Design decisions (full detail in REQUIREMENTS.md)
 
 * RPE chart embedded in `RpeCalculator.kt`, verified by Jack; RPE 6 column
