@@ -127,4 +127,46 @@ class BackupServerTest {
         assertEquals(HttpStatusCode.BadRequest, response.status)
         response.bodyAsText() // must not throw
     }
+
+    @Test
+    fun `web page is served without auth`() = withServer { client ->
+        val response = client.get("/")
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertEquals(true, response.bodyAsText().contains("pl8calcul8"))
+    }
+
+    @Test
+    fun `history requires auth`() = withServer { client ->
+        assertEquals(HttpStatusCode.Unauthorized, client.get("/history").status)
+    }
+
+    @Test
+    fun `history computes per-lift series from the latest backup`() = withServer { client ->
+        client.post("/backup") {
+            bearerAuth(TOKEN)
+            contentType(ContentType.Application.Json)
+            setBody(SAMPLE)
+        }
+
+        val history: HistoryResponse = client.get("/history") { bearerAuth(TOKEN) }.body()
+
+        val lift = history.lifts.single()
+        assertEquals("Bench Press", lift.name)
+        val entry = lift.entries.single()
+        assertEquals(1_000L, entry.date)
+        assertEquals(185.0, entry.weightLb, 1e-9)
+        // 185 x5 @8 -> 185 / 0.811
+        assertEquals(228.11, entry.oneRepMax!!, 0.01)
+        // 185 * 5 * 3
+        assertEquals(2775.0, entry.tonnage, 1e-9)
+        assertEquals("felt good", entry.notes)
+    }
+
+    @Test
+    fun `history without a backup is 404`() = withServer { client ->
+        assertEquals(
+            HttpStatusCode.NotFound,
+            client.get("/history") { bearerAuth(TOKEN) }.status,
+        )
+    }
 }

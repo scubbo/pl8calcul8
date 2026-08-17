@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>pl8calcul8</title>
+<style>
+  :root { --purple: #6750a4; --green: #386641; --muted: #6b6470; }
+  body { font-family: system-ui, sans-serif; margin: 0 auto; max-width: 720px;
+         padding: 16px; background: #fdf7ff; color: #1c1b1e; }
+  h1 { color: var(--purple); }
+  h2 { margin: 32px 0 4px; }
+  .auth { display: flex; gap: 8px; margin-bottom: 16px; }
+  .auth input { flex: 1; padding: 8px; border: 1px solid var(--muted);
+                border-radius: 8px; font-size: 1rem; }
+  .auth button { padding: 8px 20px; border: none; border-radius: 20px;
+                 background: var(--purple); color: white; font-size: 1rem; cursor: pointer; }
+  .status { color: var(--muted); margin: 8px 0; }
+  .charts { display: flex; gap: 16px; flex-wrap: wrap; }
+  figure { flex: 1; min-width: 280px; margin: 8px 0; }
+  figcaption { font-size: 0.85rem; color: var(--muted); }
+  svg { width: 100%; height: 140px; background: #f6eefb; border-radius: 8px; }
+  table { border-collapse: collapse; width: 100%; margin-top: 8px; font-size: 0.9rem; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #e0d5e8; }
+  th { color: var(--muted); font-weight: 600; }
+  .notes { color: var(--muted); font-style: italic; }
+</style>
+</head>
+<body>
+<h1>pl8calcul8</h1>
+<div class="auth">
+  <input id="token" type="password" placeholder="Backup token">
+  <button onclick="load()">Load</button>
+</div>
+<div class="status" id="status"></div>
+<div id="lifts"></div>
+
+<script>
+"use strict";
+
+const fmtDate = (ms) => new Date(ms).toISOString().slice(0, 10);
+const fmtRpe = (r) => (r % 1 === 0 ? r.toFixed(0) : r.toString());
+
+// Minimal SVG line chart: polyline + point markers + min/max/date labels.
+function chart(points, color) {
+  const w = 320, h = 140, padL = 44, padR = 8, padT = 12, padB = 20;
+  if (points.length < 2) {
+    return `<svg viewBox="0 0 ${w} ${h}"><text x="${w / 2}" y="${h / 2}"
+      text-anchor="middle" fill="#6b6470" font-size="12">Not enough data to chart yet</text></svg>`;
+  }
+  const xs = points.map((p) => p[0]), ys = points.map((p) => p[1]);
+  const minX = Math.min(...xs), maxX = Math.max(...xs);
+  const minY = Math.min(...ys), maxY = Math.max(...ys);
+  const padY = Math.max((maxY - minY) * 0.1, 1);
+  const x = (v) => maxX === minX ? (padL + w - padR) / 2
+    : padL + ((v - minX) / (maxX - minX)) * (w - padL - padR);
+  const y = (v) => (h - padB) - ((v - (minY - padY)) / ((maxY + padY) - (minY - padY))) * (h - padB - padT);
+  const line = points.map((p) => `${x(p[0]).toFixed(1)},${y(p[1]).toFixed(1)}`).join(" ");
+  const dots = points.map((p) =>
+    `<circle cx="${x(p[0]).toFixed(1)}" cy="${y(p[1]).toFixed(1)}" r="3" fill="${color}"/>`).join("");
+  return `<svg viewBox="0 0 ${w} ${h}">
+    <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${h - padB}" stroke="#cbc0d5"/>
+    <line x1="${padL}" y1="${h - padB}" x2="${w - padR}" y2="${h - padB}" stroke="#cbc0d5"/>
+    <text x="${padL - 4}" y="${y(maxY) + 4}" text-anchor="end" font-size="10" fill="#6b6470">${Math.round(maxY)}</text>
+    <text x="${padL - 4}" y="${y(minY) + 4}" text-anchor="end" font-size="10" fill="#6b6470">${Math.round(minY)}</text>
+    <text x="${padL}" y="${h - 6}" font-size="10" fill="#6b6470">${fmtDate(minX)}</text>
+    <text x="${w - padR}" y="${h - 6}" text-anchor="end" font-size="10" fill="#6b6470">${fmtDate(maxX)}</text>
+    <polyline points="${line}" fill="none" stroke="${color}" stroke-width="2"/>
+    ${dots}
+  </svg>`;
+}
+
+function renderLift(lift) {
+  const e1rm = lift.entries.filter((e) => e.oneRepMax !== null).map((e) => [e.date, e.oneRepMax]);
+  const tonnage = lift.entries.map((e) => [e.date, e.tonnage]);
+  const rows = [...lift.entries].reverse().map((e) => `
+    <tr>
+      <td>${fmtDate(e.date)}</td>
+      <td>${e.assignedReps}@${fmtRpe(e.assignedRpe)} × ${e.sets}</td>
+      <td>${e.weightLb} lb @ ${fmtRpe(e.rpe)}</td>
+      <td>${e.oneRepMax === null ? "—" : Math.round(e.oneRepMax)}</td>
+      <td class="notes">${e.notes ?? ""}</td>
+    </tr>`).join("");
+  return `
+    <h2>${lift.name}</h2>
+    <div class="charts">
+      <figure>${chart(e1rm, "var(--purple)")}<figcaption>Estimated 1RM</figcaption></figure>
+      <figure>${chart(tonnage, "var(--green)")}<figcaption>Total weight lifted (lb)</figcaption></figure>
+    </div>
+    <table>
+      <tr><th>Date</th><th>Assigned</th><th>Result</th><th>e1RM</th><th>Notes</th></tr>
+      ${rows}
+    </table>`;
+}
+
+async function load() {
+  const token = document.getElementById("token").value.trim();
+  const status = document.getElementById("status");
+  const container = document.getElementById("lifts");
+  localStorage.setItem("token", token);
+  status.textContent = "Loading…";
+  container.innerHTML = "";
+  try {
+    const response = await fetch("/history", { headers: { Authorization: `Bearer ${token}` } });
+    if (response.status === 401) { status.textContent = "Wrong token."; return; }
+    if (response.status === 404) { status.textContent = "No backups on the server yet."; return; }
+    if (!response.ok) { status.textContent = `Server error: ${response.status}`; return; }
+    const history = await response.json();
+    status.textContent = "";
+    container.innerHTML = history.lifts.map(renderLift).join("");
+  } catch (err) {
+    status.textContent = `Failed to load: ${err}`;
+  }
+}
+
+const saved = localStorage.getItem("token");
+if (saved) {
+  document.getElementById("token").value = saved;
+  load();
+}
+</script>
+</body>
+</html>

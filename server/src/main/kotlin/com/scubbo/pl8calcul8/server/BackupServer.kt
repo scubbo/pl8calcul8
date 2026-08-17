@@ -1,6 +1,7 @@
 package com.scubbo.pl8calcul8.server
 
 import com.scubbo.pl8calcul8.backup.BackupPayload
+import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
@@ -82,6 +83,10 @@ fun Application.backupServer(config: BackupConfig) {
         get("/healthz") {
             call.respondText("ok")
         }
+        get("/") {
+            val page = this::class.java.classLoader.getResource("web/index.html")!!.readText()
+            call.respondText(page, ContentType.Text.Html)
+        }
         authenticate("backup-token") {
             post("/backup") {
                 val payload = call.receive<BackupPayload>()
@@ -94,6 +99,14 @@ fun Application.backupServer(config: BackupConfig) {
                     call.respondText("No backups yet", status = HttpStatusCode.NotFound)
                 } else {
                     call.respond(latest)
+                }
+            }
+            get("/history") {
+                val latest = store.latest()
+                if (latest == null) {
+                    call.respondText("No backups yet", status = HttpStatusCode.NotFound)
+                } else {
+                    call.respond(buildHistory(latest))
                 }
             }
         }
