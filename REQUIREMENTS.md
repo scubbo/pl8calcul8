@@ -77,15 +77,14 @@ conflicts with SPEC.md, this document wins.
 
 * Manual "Backup now" and "Restore" buttons in the app.
 * Auth: static shared secret / API key configured in the app.
-* Self-hosted; endpoints for upload and restore only (web history view is a
-  stretch goal, not P0).
+* Self-hosted; endpoints for upload and restore, plus a minimal web UI at /
+  (token-gated /history data; per-lift e1RM + tonnage charts and tables).
 
 ## Backlog (explicitly not v1)
 
 * Rest timer
 * CSV export
 * Dark mode
-* Web interface for viewing history
 * Custom app icon (currently the default Android icon)
 * In-progress session survives process death (currently a killed app loses
   an unfinished workout; ViewModel state only survives rotation)
