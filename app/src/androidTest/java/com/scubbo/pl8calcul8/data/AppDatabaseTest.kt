@@ -115,6 +115,39 @@ class AppDatabaseTest {
     }
 
     @Test
+    fun dumpReturnsAllRowsAndWipeClearsThem() = runBlocking {
+        val liftId = db.liftDao().insert(Lift(name = "Squat", incrementLb = 10.0))
+        val workoutId = db.workoutDao().insert(Workout(date = 1_000L))
+        db.workoutDao().insert(
+            Exercise(
+                workoutId = workoutId, liftId = liftId,
+                assignedReps = 5, assignedRpe = 8.0, sets = 3,
+                weightLb = 225.0, rpe = 8.5, notes = "hard",
+            )
+        )
+
+        assertEquals(1, db.liftDao().dump().size)
+        assertEquals(1, db.workoutDao().dumpWorkouts().size)
+        assertEquals(1, db.workoutDao().dumpExercises().size)
+
+        db.workoutDao().deleteAllExercises()
+        db.workoutDao().deleteAllWorkouts()
+        db.liftDao().deleteAll()
+
+        assertEquals(0, db.liftDao().dump().size)
+        assertEquals(0, db.workoutDao().dumpWorkouts().size)
+        assertEquals(0, db.workoutDao().dumpExercises().size)
+    }
+
+    @Test
+    fun insertPreservesExplicitIds() = runBlocking {
+        val liftId = db.liftDao().insert(Lift(id = 42, name = "Squat"))
+        assertEquals(42L, liftId)
+        val workoutId = db.workoutDao().insert(Workout(id = 7, date = 1_000L))
+        assertEquals(7L, workoutId)
+    }
+
+    @Test
     fun seedCallbackPopulatesDefaultLifts() = runBlocking {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val seeded = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java)

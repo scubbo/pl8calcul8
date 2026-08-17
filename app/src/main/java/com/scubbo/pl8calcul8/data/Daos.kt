@@ -15,6 +15,12 @@ interface LiftDao {
 
     @Query("UPDATE Lift SET incrementLb = :incrementLb WHERE id = :liftId")
     suspend fun updateIncrement(liftId: Long, incrementLb: Double)
+
+    @Query("SELECT * FROM Lift")
+    suspend fun dump(): List<Lift>
+
+    @Query("DELETE FROM Lift")
+    suspend fun deleteAll()
 }
 
 /** Creates a lift with the default increment, returning it with its new id. */
@@ -64,4 +70,16 @@ interface WorkoutDao {
         """
     )
     suspend fun historyForLift(liftId: Long): List<ExerciseHistoryEntry>
+
+    @Query("SELECT * FROM Workout")
+    suspend fun dumpWorkouts(): List<Workout>
+
+    @Query("SELECT * FROM Exercise")
+    suspend fun dumpExercises(): List<Exercise>
+
+    @Query("DELETE FROM Workout")
+    suspend fun deleteAllWorkouts()
+
+    @Query("DELETE FROM Exercise")
+    suspend fun deleteAllExercises()
 }

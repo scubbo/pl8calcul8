@@ -20,6 +20,12 @@ class FakeLiftDao : LiftDao {
             if (it.id == liftId) it.copy(incrementLb = incrementLb) else it
         }
     }
+
+    override suspend fun dump(): List<Lift> = lifts.value
+
+    override suspend fun deleteAll() {
+        lifts.value = emptyList()
+    }
 }
 
 class FakeWorkoutDao : WorkoutDao {
@@ -53,6 +59,14 @@ class FakeWorkoutDao : WorkoutDao {
                     sets = it.sets, rpe = it.rpe, notes = it.notes,
                 )
             }
+
+    override suspend fun dumpWorkouts(): List<Workout> = workouts.toList()
+
+    override suspend fun dumpExercises(): List<Exercise> = exercises.toList()
+
+    override suspend fun deleteAllWorkouts() = workouts.clear()
+
+    override suspend fun deleteAllExercises() = exercises.clear()
 
     private fun workoutDate(workoutId: Long) = workouts.first { it.id == workoutId }.date
 }

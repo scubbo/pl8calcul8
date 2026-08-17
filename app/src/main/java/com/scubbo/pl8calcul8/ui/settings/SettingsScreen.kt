@@ -25,13 +25,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.room.withTransaction
 import com.scubbo.pl8calcul8.data.AppDatabase
 import com.scubbo.pl8calcul8.data.Lift
+import com.scubbo.pl8calcul8.data.backup.PrefsBackupConfigStore
 import com.scubbo.pl8calcul8.ui.components.NewLiftDialog
 import com.scubbo.pl8calcul8.ui.components.NumberSpinner
 import kotlinx.coroutines.launch
@@ -46,11 +50,19 @@ private fun incrementLabel(incrementLb: Double): String =
 fun SettingsScreen() {
     val context = LocalContext.current
     val db = remember { AppDatabase.get(context) }
-    val vm: SettingsViewModel = viewModel { SettingsViewModel(db.liftDao()) }
+    val vm: SettingsViewModel = viewModel {
+        SettingsViewModel(
+            liftDao = db.liftDao(),
+            workoutDao = db.workoutDao(),
+            configStore = PrefsBackupConfigStore(context.applicationContext),
+            runInTransaction = { block -> db.withTransaction { block() } },
+        )
+    }
     val lifts by vm.lifts.collectAsState(initial = emptyList())
     val scope = rememberCoroutineScope()
     var editing by remember { mutableStateOf<Lift?>(null) }
     var showNewLift by remember { mutableStateOf(false) }
+    var showRestoreConfirm by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -86,22 +98,7 @@ fun SettingsScreen() {
             Text("Add lift")
         }
         Spacer(Modifier.height(24.dp))
-        Text("Backup", style = MaterialTheme.typography.titleMedium)
-        Spacer(Modifier.height(4.dp))
-        Text(
-            "Requires the backup server — coming soon.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(Modifier.height(8.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = {}, enabled = false, modifier = Modifier.weight(1f)) {
-                Text("Back up now")
-            }
-            OutlinedButton(onClick = {}, enabled = false, modifier = Modifier.weight(1f)) {
-                Text("Restore")
-            }
-        }
+        BackupSection(vm, onRestoreRequested = { showRestoreConfirm = true })
     }
 
     editing?.let { lift ->
@@ -126,6 +123,104 @@ fun SettingsScreen() {
                 }
             },
             onDismiss = { showNewLift = false },
+        )
+    }
+
+    if (showRestoreConfirm) {
+        AlertDialog(
+            onDismissRequest = { showRestoreConfirm = false },
+            title = { Text("Restore from backup?") },
+            text = {
+                Text(
+                    "This replaces everything on this device — lifts, workouts, " +
+                        "and history — with the server's most recent backup."
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showRestoreConfirm = false
+                        scope.launch { vm.restore() }
+                    },
+                ) {
+                    Text("Replace my data")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRestoreConfirm = false }) { Text("Cancel") }
+            },
+        )
+    }
+}
+
+@Composable
+private fun BackupSection(vm: SettingsViewModel, onRestoreRequested: () -> Unit) {
+    val savedUrl by vm.serverUrl.collectAsState()
+    val savedToken by vm.token.collectAsState()
+    val status by vm.backupStatus.collectAsState()
+    val scope = rememberCoroutineScope()
+    var url by remember(savedUrl) { mutableStateOf(savedUrl) }
+    var token by remember(savedToken) { mutableStateOf(savedToken) }
+    var busy by remember { mutableStateOf(false) }
+
+    Text("Backup", style = MaterialTheme.typography.titleMedium)
+    Spacer(Modifier.height(8.dp))
+    OutlinedTextField(
+        value = url,
+        onValueChange = { url = it },
+        label = { Text("Server URL") },
+        placeholder = { Text("https://pl8calcul8.example.org") },
+        singleLine = true,
+        modifier = Modifier.fillMaxWidth(),
+    )
+    Spacer(Modifier.height(8.dp))
+    OutlinedTextField(
+        value = token,
+        onValueChange = { token = it },
+        label = { Text("Token") },
+        singleLine = true,
+        visualTransformation = PasswordVisualTransformation(),
+        modifier = Modifier.fillMaxWidth(),
+    )
+    Spacer(Modifier.height(8.dp))
+    val configChanged = url != savedUrl || token != savedToken
+    if (configChanged) {
+        OutlinedButton(
+            onClick = { vm.saveConfig(url, token) },
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text("Save server settings")
+        }
+        Spacer(Modifier.height(8.dp))
+    }
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Button(
+            onClick = {
+                scope.launch {
+                    busy = true
+                    vm.backup()
+                    busy = false
+                }
+            },
+            enabled = vm.isConfigured() && !configChanged && !busy,
+            modifier = Modifier.weight(1f),
+        ) {
+            Text("Back up now")
+        }
+        OutlinedButton(
+            onClick = onRestoreRequested,
+            enabled = vm.isConfigured() && !configChanged && !busy,
+            modifier = Modifier.weight(1f),
+        ) {
+            Text("Restore")
+        }
+    }
+    status?.let {
+        Spacer(Modifier.height(8.dp))
+        Text(
+            it,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
