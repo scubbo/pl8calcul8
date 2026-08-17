@@ -17,9 +17,38 @@ Obtainium (app on the phone) watches github.com/scubbo/pl8calcul8,
   notifies when a new Release appears, downloads + installs the APK
 ```
 
-No app store, no manual USB cable. The server component is deployed
-separately (GitHub Actions builds the Docker image on push to main;
-bump the image tag in homelab-configuration's chart to deploy).
+No app store, no manual USB cable.
+
+## Server deployment (fully automatic)
+
+```
+push to main (server/shared/gradle changes)
+        │
+        ▼
+GitHub Actions (.github/workflows/server-image.yml)
+  job 1: builds ghcr.io/scubbo/pl8calcul8:sha-<commit>
+  job 2: commits that tag into homelab-configuration's
+         charts/pl8calcul8/values.yaml (as UpdaterBot)
+        │
+        ▼
+ArgoCD notices the homelab-configuration commit and rolls the deployment
+```
+
+Job 2 authenticates with the same GitHub App used by blog-content's
+deploy automation (client-id `Iv23linrv3EjCnSWuWoS`). It needs:
+
+* repo secret `DEPLOYMENT_APP_PRIVATE_KEY` (same PEM as in blog-content's
+  secrets): `gh secret set DEPLOYMENT_APP_PRIVATE_KEY --repo scubbo/pl8calcul8 < key.pem`
+* the App's installation to include `homelab-configuration`
+  (github.com → Settings → Integrations → the deployment app → Repository
+  access). If it's scoped to selected repositories, add it there.
+
+## Repo protection
+
+`main` is protected by the `protect-main` ruleset: all changes require a
+PR with one approval; force-pushes and deletions are blocked; repository
+admins (Jack) may bypass. Manage at
+https://github.com/scubbo/pl8calcul8/rules or `gh api /repos/scubbo/pl8calcul8/rulesets`.
 
 ## Cutting a release
 
