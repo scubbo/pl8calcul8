@@ -25,8 +25,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -64,41 +66,45 @@ fun SettingsScreen() {
     var showNewLift by remember { mutableStateOf(false) }
     var showRestoreConfirm by remember { mutableStateOf(false) }
 
-    Column(
+    LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(horizontal = 16.dp),
     ) {
-        Text("Settings", style = MaterialTheme.typography.headlineMedium)
-        Spacer(Modifier.height(16.dp))
-        Text("Lifts", style = MaterialTheme.typography.titleMedium)
-        Spacer(Modifier.height(4.dp))
-        LazyColumn(modifier = Modifier.weight(1f)) {
-            items(lifts) { lift ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { editing = lift }
-                        .padding(vertical = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(lift.name, style = MaterialTheme.typography.bodyLarge)
-                    Text(
-                        "+${incrementLabel(lift.incrementLb)} lb",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                HorizontalDivider()
+        item {
+            Spacer(Modifier.height(16.dp))
+            Text("Settings", style = MaterialTheme.typography.headlineMedium)
+            Spacer(Modifier.height(16.dp))
+            Text("Lifts", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(4.dp))
+        }
+        items(lifts) { lift ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { editing = lift }
+                    .padding(vertical = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(lift.name, style = MaterialTheme.typography.bodyLarge)
+                Text(
+                    "+${incrementLabel(lift.incrementLb)} lb",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
+            HorizontalDivider()
         }
-        Spacer(Modifier.height(8.dp))
-        OutlinedButton(onClick = { showNewLift = true }, modifier = Modifier.fillMaxWidth()) {
-            Text("Add lift")
+        item {
+            Spacer(Modifier.height(8.dp))
+            OutlinedButton(onClick = { showNewLift = true }, modifier = Modifier.fillMaxWidth()) {
+                Text("Add lift")
+            }
+            Spacer(Modifier.height(24.dp))
+            BackupSection(vm, onRestoreRequested = { showRestoreConfirm = true })
+            Spacer(Modifier.height(16.dp))
         }
-        Spacer(Modifier.height(24.dp))
-        BackupSection(vm, onRestoreRequested = { showRestoreConfirm = true })
     }
 
     editing?.let { lift ->
@@ -171,6 +177,7 @@ private fun BackupSection(vm: SettingsViewModel, onRestoreRequested: () -> Unit)
         label = { Text("Server URL") },
         placeholder = { Text("https://pl8calcul8.example.org") },
         singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
         modifier = Modifier.fillMaxWidth(),
     )
     Spacer(Modifier.height(8.dp))
@@ -179,6 +186,7 @@ private fun BackupSection(vm: SettingsViewModel, onRestoreRequested: () -> Unit)
         onValueChange = { token = it },
         label = { Text("Token") },
         singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
         visualTransformation = PasswordVisualTransformation(),
         modifier = Modifier.fillMaxWidth(),
     )
