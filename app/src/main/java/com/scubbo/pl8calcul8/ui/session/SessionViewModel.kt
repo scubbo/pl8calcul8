@@ -2,12 +2,14 @@ package com.scubbo.pl8calcul8.ui.session
 
 import androidx.lifecycle.ViewModel
 import com.scubbo.pl8calcul8.calc.RpeCalculator
+import com.scubbo.pl8calcul8.data.DraftDao
+import com.scubbo.pl8calcul8.data.DraftExercise
 import com.scubbo.pl8calcul8.data.Exercise
 import com.scubbo.pl8calcul8.data.Lift
 import com.scubbo.pl8calcul8.data.LiftDao
 import com.scubbo.pl8calcul8.data.Workout
-import com.scubbo.pl8calcul8.data.createLift
 import com.scubbo.pl8calcul8.data.WorkoutDao
+import com.scubbo.pl8calcul8.data.createLift
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -34,6 +36,7 @@ data class PlannedExercise(
 class SessionViewModel(
     private val liftDao: LiftDao,
     private val workoutDao: WorkoutDao,
+    private val draftDao: DraftDao,
     private val clock: () -> Long = System::currentTimeMillis,
 ) : ViewModel() {
 
@@ -43,6 +46,48 @@ class SessionViewModel(
     val planned: StateFlow<List<PlannedExercise>> = _planned.asStateFlow()
 
     suspend fun addLift(name: String): Lift = liftDao.createLift(name)
+
+    /** Rebuilds an unfinished session persisted before the process died. */
+    suspend fun loadDraft() {
+        val drafts = draftDao.load()
+        if (drafts.isEmpty()) return
+        _planned.value = drafts.mapNotNull { draft ->
+            val lift = liftDao.byId(draft.liftId) ?: return@mapNotNull null
+            PlannedExercise(
+                lift = lift,
+                reps = draft.reps,
+                rpe = draft.rpe,
+                sets = draft.sets,
+                advisedWeightLb = draft.advisedWeightLb,
+                result = draft.resultWeightLb?.let { weight ->
+                    ExerciseResult(weight, draft.resultRpe!!, draft.resultNotes)
+                },
+            )
+        }
+    }
+
+    private suspend fun persistDraft() {
+        draftDao.replaceAll(
+            _planned.value.mapIndexed { index, exercise ->
+                DraftExercise(
+                    position = index,
+                    liftId = exercise.lift.id,
+                    reps = exercise.reps,
+                    rpe = exercise.rpe,
+                    sets = exercise.sets,
+                    advisedWeightLb = exercise.advisedWeightLb,
+                    resultWeightLb = exercise.result?.weightLb,
+                    resultRpe = exercise.result?.rpe,
+                    resultNotes = exercise.result?.notes,
+                )
+            }
+        )
+    }
+
+    suspend fun discardSession() {
+        _planned.value = emptyList()
+        draftDao.clear()
+    }
 
     suspend fun addExercise(lift: Lift, reps: Int, rpe: Double, sets: Int) {
         val previous = workoutDao.mostRecentExerciseForLift(lift.id)
@@ -60,9 +105,10 @@ class SessionViewModel(
             lift = lift, reps = reps, rpe = rpe, sets = sets,
             advisedWeightLb = advised,
         )
+        persistDraft()
     }
 
-    fun recordResult(index: Int, weightLb: Double, rpe: Double, notes: String?) {
+    suspend fun recordResult(index: Int, weightLb: Double, rpe: Double, notes: String?) {
         _planned.value = _planned.value.mapIndexed { i, exercise ->
             if (i == index) {
                 exercise.copy(result = ExerciseResult(weightLb, rpe, notes?.takeIf { it.isNotBlank() }))
@@ -70,6 +116,7 @@ class SessionViewModel(
                 exercise
             }
         }
+        persistDraft()
     }
 
     /** Persists all recorded exercises as a workout. No-op if nothing was recorded. */
@@ -93,5 +140,6 @@ class SessionViewModel(
             )
         }
         _planned.value = emptyList()
+        draftDao.clear()
     }
 }

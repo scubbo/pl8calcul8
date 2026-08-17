@@ -31,6 +31,10 @@ android {
     buildFeatures {
         compose = true
     }
+    sourceSets {
+        // Expose exported Room schemas to instrumented tests for migration testing.
+        getByName("androidTest").assets.srcDir("$projectDir/schemas")
+    }
 }
 
 ksp {
@@ -60,5 +64,6 @@ dependencies {
     testImplementation(libs.ktor.client.mock)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.room.testing)
     debugImplementation(libs.androidx.ui.tooling)
 }

@@ -20,6 +20,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -64,19 +65,35 @@ private fun nearestWeightOption(weightLb: Double): Double =
 fun SessionScreen(onFinished: () -> Unit) {
     val context = LocalContext.current
     val db = remember { AppDatabase.get(context) }
-    val vm: SessionViewModel = viewModel { SessionViewModel(db.liftDao(), db.workoutDao()) }
+    val vm: SessionViewModel = viewModel {
+        SessionViewModel(db.liftDao(), db.workoutDao(), db.draftDao())
+    }
     val planned by vm.planned.collectAsState()
     val lifts by vm.lifts.collectAsState(initial = emptyList())
     val scope = rememberCoroutineScope()
     var showAddDialog by remember { mutableStateOf(false) }
     var expandedIndex by remember { mutableStateOf<Int?>(null) }
+    var showDiscardConfirm by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) { vm.loadDraft() }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
     ) {
-        Text("Workout", style = MaterialTheme.typography.headlineMedium)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text("Workout", style = MaterialTheme.typography.headlineMedium)
+            if (planned.isNotEmpty()) {
+                TextButton(onClick = { showDiscardConfirm = true }) {
+                    Text("Discard")
+                }
+            }
+        }
         Spacer(Modifier.height(16.dp))
         LazyColumn(
             modifier = Modifier.weight(1f),
@@ -88,8 +105,10 @@ fun SessionScreen(onFinished: () -> Unit) {
                     expanded = expandedIndex == index,
                     onToggle = { expandedIndex = if (expandedIndex == index) null else index },
                     onRecord = { weight, rpe, notes ->
-                        vm.recordResult(index, weight, rpe, notes)
-                        expandedIndex = null
+                        scope.launch {
+                            vm.recordResult(index, weight, rpe, notes)
+                            expandedIndex = null
+                        }
                     },
                 )
             }
@@ -106,6 +125,27 @@ fun SessionScreen(onFinished: () -> Unit) {
         ) {
             Text("Finish workout")
         }
+    }
+
+    if (showDiscardConfirm) {
+        AlertDialog(
+            onDismissRequest = { showDiscardConfirm = false },
+            title = { Text("Discard this workout?") },
+            text = { Text("Planned exercises and any recorded results will be lost.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDiscardConfirm = false
+                        scope.launch { vm.discardSession() }
+                    },
+                ) {
+                    Text("Discard")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDiscardConfirm = false }) { Text("Cancel") }
+            },
+        )
     }
 
     if (showAddDialog) {

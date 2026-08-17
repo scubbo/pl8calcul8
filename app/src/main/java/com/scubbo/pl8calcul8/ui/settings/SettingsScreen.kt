@@ -32,6 +32,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.room.withTransaction
@@ -167,6 +168,7 @@ private fun BackupSection(vm: SettingsViewModel, onRestoreRequested: () -> Unit)
     val scope = rememberCoroutineScope()
     var url by remember(savedUrl) { mutableStateOf(savedUrl) }
     var token by remember(savedToken) { mutableStateOf(savedToken) }
+    var tokenVisible by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
 
     Text("Backup", style = MaterialTheme.typography.titleMedium)
@@ -187,7 +189,13 @@ private fun BackupSection(vm: SettingsViewModel, onRestoreRequested: () -> Unit)
         label = { Text("Token") },
         singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-        visualTransformation = PasswordVisualTransformation(),
+        visualTransformation =
+            if (tokenVisible) VisualTransformation.None else PasswordVisualTransformation(),
+        trailingIcon = {
+            TextButton(onClick = { tokenVisible = !tokenVisible }) {
+                Text(if (tokenVisible) "Hide" else "Show")
+            }
+        },
         modifier = Modifier.fillMaxWidth(),
     )
     Spacer(Modifier.height(8.dp))

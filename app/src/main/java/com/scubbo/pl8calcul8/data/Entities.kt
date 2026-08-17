@@ -26,6 +26,34 @@ data class Workout(
  * exercise; actual reps are assumed to match the assignment (deviations go
  * in [notes]).
  */
+/**
+ * One planned exercise of an in-progress workout, persisted so an unfinished
+ * session survives the app's process being killed.
+ */
+@Entity(
+    foreignKeys = [
+        ForeignKey(
+            entity = Lift::class,
+            parentColumns = ["id"],
+            childColumns = ["liftId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
+    indices = [Index("liftId")],
+)
+data class DraftExercise(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val position: Int,
+    val liftId: Long,
+    val reps: Int,
+    val rpe: Double,
+    val sets: Int,
+    val advisedWeightLb: Double?,
+    val resultWeightLb: Double?,
+    val resultRpe: Double?,
+    val resultNotes: String?,
+)
+
 @Entity(
     foreignKeys = [
         ForeignKey(

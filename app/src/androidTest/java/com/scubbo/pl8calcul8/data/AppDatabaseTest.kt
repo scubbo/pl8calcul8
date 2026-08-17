@@ -148,6 +148,37 @@ class AppDatabaseTest {
     }
 
     @Test
+    fun draftRoundTripAndClear() = runBlocking {
+        val liftId = db.liftDao().insert(Lift(name = "Squat"))
+        val drafts = listOf(
+            DraftExercise(
+                position = 0, liftId = liftId, reps = 5, rpe = 8.0, sets = 3,
+                advisedWeightLb = 225.0, resultWeightLb = 225.0, resultRpe = 8.5,
+                resultNotes = "hard",
+            ),
+            DraftExercise(
+                position = 1, liftId = liftId, reps = 4, rpe = 7.0, sets = 3,
+                advisedWeightLb = null, resultWeightLb = null, resultRpe = null,
+                resultNotes = null,
+            ),
+        )
+
+        db.draftDao().replaceAll(drafts)
+
+        val loaded = db.draftDao().load()
+        assertEquals(2, loaded.size)
+        assertEquals(225.0, loaded[0].resultWeightLb!!, 1e-9)
+        assertEquals("hard", loaded[0].resultNotes)
+        assertNull(loaded[1].advisedWeightLb)
+
+        db.draftDao().replaceAll(listOf(drafts[1]))
+        assertEquals(1, db.draftDao().load().size)
+
+        db.draftDao().clear()
+        assertEquals(0, db.draftDao().load().size)
+    }
+
+    @Test
     fun seedCallbackPopulatesDefaultLifts() = runBlocking {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val seeded = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java)

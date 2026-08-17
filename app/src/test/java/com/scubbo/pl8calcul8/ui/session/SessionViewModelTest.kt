@@ -1,6 +1,7 @@
 package com.scubbo.pl8calcul8.ui.session
 
 import com.scubbo.pl8calcul8.data.Exercise
+import com.scubbo.pl8calcul8.data.FakeDraftDao
 import com.scubbo.pl8calcul8.data.FakeLiftDao
 import com.scubbo.pl8calcul8.data.FakeWorkoutDao
 import com.scubbo.pl8calcul8.data.Lift
@@ -14,8 +15,9 @@ import org.junit.Test
 class SessionViewModelTest {
     private val liftDao = FakeLiftDao()
     private val workoutDao = FakeWorkoutDao()
+    private val draftDao = FakeDraftDao()
     private val clock = { 42_000L }
-    private val vm = SessionViewModel(liftDao, workoutDao, clock)
+    private val vm = SessionViewModel(liftDao, workoutDao, draftDao, clock)
 
     private suspend fun seedHistory(lift: Lift, weightLb: Double, reps: Int, rpe: Double) {
         val workoutId = workoutDao.insert(Workout(date = 1_000L))
@@ -118,5 +120,62 @@ class SessionViewModelTest {
 
         assertTrue(workoutDao.workouts.isEmpty())
         assertTrue(workoutDao.exercises.isEmpty())
+    }
+
+    @Test
+    fun `session mutations persist a draft`() = runTest {
+        val bench = Lift(id = 1, name = "Bench Press")
+        liftDao.insert(bench.copy(id = 0))
+        vm.addExercise(bench, reps = 4, rpe = 7.0, sets = 3)
+
+        assertEquals(1, draftDao.drafts.size)
+        assertNull(draftDao.drafts[0].resultWeightLb)
+
+        vm.recordResult(index = 0, weightLb = 205.0, rpe = 7.5, notes = "ok")
+
+        assertEquals(205.0, draftDao.drafts.single().resultWeightLb!!, 1e-9)
+        assertEquals("ok", draftDao.drafts.single().resultNotes)
+    }
+
+    @Test
+    fun `a persisted draft is reloaded into a fresh session`() = runTest {
+        val benchId = liftDao.insert(Lift(name = "Bench Press"))
+        val bench = liftDao.lifts.value.single()
+        vm.addExercise(bench, reps = 4, rpe = 7.0, sets = 3)
+        vm.recordResult(index = 0, weightLb = 205.0, rpe = 7.5, notes = null)
+
+        // Simulates process death: a brand-new ViewModel over the same storage
+        val revived = SessionViewModel(liftDao, workoutDao, draftDao, clock)
+        revived.loadDraft()
+
+        val planned = revived.planned.value.single()
+        assertEquals(benchId, planned.lift.id)
+        assertEquals(4, planned.reps)
+        assertEquals(205.0, planned.result!!.weightLb, 1e-9)
+    }
+
+    @Test
+    fun `finishing clears the draft`() = runTest {
+        liftDao.insert(Lift(name = "Bench Press"))
+        val bench = liftDao.lifts.value.single()
+        vm.addExercise(bench, reps = 4, rpe = 7.0, sets = 3)
+        vm.recordResult(index = 0, weightLb = 205.0, rpe = 7.5, notes = null)
+
+        vm.finishSession()
+
+        assertTrue(draftDao.drafts.isEmpty())
+    }
+
+    @Test
+    fun `discarding clears the session and the draft`() = runTest {
+        liftDao.insert(Lift(name = "Bench Press"))
+        val bench = liftDao.lifts.value.single()
+        vm.addExercise(bench, reps = 4, rpe = 7.0, sets = 3)
+
+        vm.discardSession()
+
+        assertTrue(vm.planned.value.isEmpty())
+        assertTrue(draftDao.drafts.isEmpty())
+        assertTrue(workoutDao.workouts.isEmpty())
     }
 }

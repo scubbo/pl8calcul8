@@ -1,18 +1,21 @@
 package com.scubbo.pl8calcul8.data
 
 import android.content.Context
+import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
-    entities = [Lift::class, Workout::class, Exercise::class],
-    version = 1,
+    entities = [Lift::class, Workout::class, Exercise::class, DraftExercise::class],
+    version = 2,
+    autoMigrations = [AutoMigration(from = 1, to = 2)],
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun liftDao(): LiftDao
     abstract fun workoutDao(): WorkoutDao
+    abstract fun draftDao(): DraftDao
 
     companion object {
         private val SEED_LIFTS = listOf(

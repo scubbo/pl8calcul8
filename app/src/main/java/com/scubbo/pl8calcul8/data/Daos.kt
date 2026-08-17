@@ -3,6 +3,7 @@ package com.scubbo.pl8calcul8.data
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Transaction
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -19,8 +20,29 @@ interface LiftDao {
     @Query("SELECT * FROM Lift")
     suspend fun dump(): List<Lift>
 
+    @Query("SELECT * FROM Lift WHERE id = :id")
+    suspend fun byId(id: Long): Lift?
+
     @Query("DELETE FROM Lift")
     suspend fun deleteAll()
+}
+
+@Dao
+interface DraftDao {
+    @Query("SELECT * FROM DraftExercise ORDER BY position")
+    suspend fun load(): List<DraftExercise>
+
+    @Insert
+    suspend fun insertAll(drafts: List<DraftExercise>)
+
+    @Query("DELETE FROM DraftExercise")
+    suspend fun clear()
+
+    @Transaction
+    suspend fun replaceAll(drafts: List<DraftExercise>) {
+        clear()
+        insertAll(drafts)
+    }
 }
 
 /** Creates a lift with the default increment, returning it with its new id. */

@@ -23,9 +23,24 @@ class FakeLiftDao : LiftDao {
 
     override suspend fun dump(): List<Lift> = lifts.value
 
+    override suspend fun byId(id: Long): Lift? = lifts.value.find { it.id == id }
+
     override suspend fun deleteAll() {
         lifts.value = emptyList()
     }
+}
+
+class FakeDraftDao : DraftDao {
+    val drafts = mutableListOf<DraftExercise>()
+    private var nextId = 1L
+
+    override suspend fun load(): List<DraftExercise> = drafts.sortedBy { it.position }
+
+    override suspend fun insertAll(drafts: List<DraftExercise>) {
+        this.drafts += drafts.map { it.copy(id = nextId++) }
+    }
+
+    override suspend fun clear() = drafts.clear()
 }
 
 class FakeWorkoutDao : WorkoutDao {
