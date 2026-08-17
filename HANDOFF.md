@@ -8,11 +8,12 @@ Last updated: 2026-08-16.
 * All committed through `c8eb60f` on `main`. Working tree should be clean
   except this file and REQUIREMENTS.md edits (commit them).
 * 18 JVM unit tests + 5 instrumented DB tests, all passing.
-* Session-UX feedback changes (spinners, Sets/Reps/RPE order, integer
-  assigned RPE, New Lift… flow) are verified on-emulator, all working.
-* NEXT: History screen (graphs + table; DAO query `historyForLift`
-  already exists), then Settings (manage lifts / increments, backup
-  buttons), then Ktor server, then phone sideload.
+* V1 is FEATURE-COMPLETE: session flow, history (single + compare modes,
+  tonnage), settings (lifts/increments), and backup/restore wired to the
+  deployed server — all verified end-to-end on the emulator.
+* NEXT: sideload to Jack's phone; Jack tests backup against the real
+  server with his token. Backlog in REQUIREMENTS.md (rest timer, CSV
+  export, dark mode, app icon, session survives process death).
 * Emulator UI automation tip: don't tap blind coordinates (dialogs shift
   when the keyboard opens). Use `/tmp/tap.py`-style uiautomator dumps to
   find widget bounds by text, or re-dump after IME changes.
