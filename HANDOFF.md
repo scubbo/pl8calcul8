@@ -39,7 +39,20 @@ Last updated: 2026-08-16.
   **WARNING**: this uninstalls the app (and its database) afterward —
   run `installDebug` again after.
 
+## Deployment state
+
+* Server is LIVE: pl8calcul8.scubbo.org (Cloudflare tunnel) and
+  pl8calcul8.avril (internal). Chart in homelab-configuration
+  charts/pl8calcul8, image ghcr.io/scubbo/pl8calcul8 pinned by sha tag.
+  Deploys = GitHub Actions builds on push to main, then bump the tag in
+  values.yaml.
+* Bearer token lives in the pl8calcul8-secrets k8s Secret (Jack holds it).
+
 ## Gotchas discovered
+
+* Querying a brand-new .avril hostname before external-dns registers it
+  makes Unbound negative-cache the NXDOMAIN (root SOA, up to ~1h). Flush
+  Unbound or wait; the record itself is fine.
 
 * AGP 9 has built-in Kotlin: do NOT apply `org.jetbrains.kotlin.android`
   (build fails). `org.jetbrains.kotlin.plugin.compose` and KSP still apply.
