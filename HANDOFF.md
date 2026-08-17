@@ -13,6 +13,17 @@ Last updated: 2026-08-16.
   icon, IME-resize fix, and password-type token field all landed.
 * Redeploying app updates to the phone: plug in via USB, then
   `./gradlew assembleDebug && adb -s <serial> install -r app/build/outputs/apk/debug/app-debug.apk`
+  (BUT: moving to release-signed builds via Obtainium — see docs/RELEASING.md)
+* IN FLIGHT — release pipeline (commit 27b8fb7): keystore generated
+  (Jack has password), signing config + tag-triggered workflow + docs
+  written. REMAINING: (1) verify local signed assembleRelease +
+  apksigner, (2) Jack sets repo secrets RELEASE_KEYSTORE_B64 +
+  RELEASE_KEYSTORE_PASSWORD, (3) uninstall debug app from phone,
+  install release APK (phone data is empty, no loss), (4) install
+  Obtainium + point at repo, (5) Jack tags v0.2 and pushes.
+* WARNING: never run connectedAndroidTest with the phone plugged in —
+  it uninstalls the app from ALL devices (wiped Jack's phone once).
+  Always ANDROID_SERIAL=emulator-5554.
 * Backlog in REQUIREMENTS.md (rest timer, CSV export, dark mode,
   session survives process death). Also consider: automatic backups,
   backup timestamp shown in Settings.
