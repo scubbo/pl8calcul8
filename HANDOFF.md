@@ -8,12 +8,14 @@ Last updated: 2026-08-16.
 * All committed through `c8eb60f` on `main`. Working tree should be clean
   except this file and REQUIREMENTS.md edits (commit them).
 * 18 JVM unit tests + 5 instrumented DB tests, all passing.
-* V1 is FEATURE-COMPLETE: session flow, history (single + compare modes,
-  tonnage), settings (lifts/increments), and backup/restore wired to the
-  deployed server — all verified end-to-end on the emulator.
-* NEXT: sideload to Jack's phone; Jack tests backup against the real
-  server with his token. Backlog in REQUIREMENTS.md (rest timer, CSV
-  export, dark mode, app icon, session survives process death).
+* V1 SHIPPED: installed on Jack's Pixel 10a (debug build via adb).
+  Backup verified against the real server with Jack's token. Launcher
+  icon, IME-resize fix, and password-type token field all landed.
+* Redeploying app updates to the phone: plug in via USB, then
+  `./gradlew assembleDebug && adb -s <serial> install -r app/build/outputs/apk/debug/app-debug.apk`
+* Backlog in REQUIREMENTS.md (rest timer, CSV export, dark mode,
+  session survives process death). Also consider: automatic backups,
+  backup timestamp shown in Settings.
 * Emulator UI automation tip: don't tap blind coordinates (dialogs shift
   when the keyboard opens). Use `/tmp/tap.py`-style uiautomator dumps to
   find widget bounds by text, or re-dump after IME changes.
