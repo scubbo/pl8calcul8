@@ -14,13 +14,12 @@ Last updated: 2026-08-16.
 * Redeploying app updates to the phone: plug in via USB, then
   `./gradlew assembleDebug && adb -s <serial> install -r app/build/outputs/apk/debug/app-debug.apk`
   (BUT: moving to release-signed builds via Obtainium — see docs/RELEASING.md)
-* IN FLIGHT — release pipeline (commit 27b8fb7): keystore generated
-  (Jack has password), signing config + tag-triggered workflow + docs
-  written. REMAINING: (1) verify local signed assembleRelease +
-  apksigner, (2) Jack sets repo secrets RELEASE_KEYSTORE_B64 +
-  RELEASE_KEYSTORE_PASSWORD, (3) uninstall debug app from phone,
-  install release APK (phone data is empty, no loss), (4) install
-  Obtainium + point at repo, (5) Jack tags v0.2 and pushes.
+* Release pipeline LIVE and verified: v0.2 published by CI, APK cert
+  matches the release keystore, versionCode from commit count. Operating
+  guide: docs/RELEASING.md. REMAINING (needs phone): uninstall debug
+  build, install Obtainium (/tmp/obtainium.apk staged, or download
+  on-device), add scubbo/pl8calcul8 in Obtainium -> installs v0.2,
+  re-enter server URL + token.
 * WARNING: never run connectedAndroidTest with the phone plugged in —
   it uninstalls the app from ALL devices (wiped Jack's phone once).
   Always ANDROID_SERIAL=emulator-5554.
