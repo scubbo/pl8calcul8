@@ -19,7 +19,7 @@ Obtainium (app on the phone) watches github.com/scubbo/pl8calcul8,
 
 No app store, no manual USB cable.
 
-## Server deployment (fully automatic)
+## Server deployment (automatic up to a PR)
 
 ```
 push to main (server/shared/gradle changes)
@@ -27,11 +27,14 @@ push to main (server/shared/gradle changes)
         ▼
 GitHub Actions (.github/workflows/server-image.yml)
   job 1: builds ghcr.io/scubbo/pl8calcul8:sha-<commit>
-  job 2: commits that tag into homelab-configuration's
+  job 2: opens a PR in homelab-configuration bumping the tag in
          charts/pl8calcul8/values.yaml (as UpdaterBot)
         │
         ▼
-ArgoCD notices the homelab-configuration commit and rolls the deployment
+Jack approves + merges the PR (homelab main is protected)
+        │
+        ▼
+ArgoCD notices the merge and rolls the deployment
 ```
 
 Job 2 authenticates with the same GitHub App used by blog-content's
