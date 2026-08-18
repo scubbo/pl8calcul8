@@ -85,6 +85,25 @@ Last updated: 2026-08-16.
 * Ollama isn't running on this machine, so hivemind memory store fails —
   persist notes to files instead.
 
+## Field-test feedback from first live workout (2026-08-17)
+
+1. Weight spinner should move in 5lb increments, not 2.5lb.
+2. UI bug: the weight spinner's flanking values overlap the labels above
+   while scrolling (NumberPicker draws outside its bounds - needs
+   clipping on the AndroidView).
+3. Recording RPE should default to the ASSIGNED RPE. (Regression: the
+   spinner rework hardcoded the fallback to 8.0 - initialRpe only passes
+   the recorded result's RPE, no longer the assignment's.)
+4. Ability to record older workouts for retroactive history. Plan: a
+   date row on the session screen (defaults to today, Material3 date
+   picker to change), date flows through finishSession and is persisted
+   with the draft.
+5. (Bigger) Multiple backup "tracks"/IDs on the server - probably a
+   special case of multi-user support. Design proposal: multiple tokens
+   server-side, each mapping to a named track stored in its own
+   subdirectory; endpoints and app stay unchanged (track inferred from
+   the presented token). Needs Jack sign-off before building.
+
 ## Jack's ideas for next session (2026-08-17, in his words + notes)
 
 1. **Auto-merge automation PRs in homelab-configuration** when
