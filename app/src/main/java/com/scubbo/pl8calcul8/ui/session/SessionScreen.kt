@@ -14,7 +14,11 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -47,7 +51,7 @@ private val RECORDED_RPE_OPTIONS: List<Double> =
 private val REP_OPTIONS: List<Int> = (RpeChart.MIN_REPS..RpeChart.MAX_REPS).toList()
 private val SET_OPTIONS: List<Int> = (1..10).toList()
 private val WEIGHT_OPTIONS: List<Double> =
-    generateSequence(2.5) { it + 2.5 }.takeWhile { it <= 995.0 }.toList()
+    generateSequence(5.0) { it + 5.0 }.takeWhile { it <= 995.0 }.toList()
 private const val DEFAULT_BAR_WEIGHT = 45.0
 
 /** Formats RPE without a trailing .0: "7", "7.5". */
@@ -57,10 +61,26 @@ private fun rpeLabel(rpe: Double): String =
 private fun weightLabel(weightLb: Double): String =
     if (weightLb % 1.0 == 0.0) weightLb.toInt().toString() else weightLb.toString()
 
+private fun sessionDateLabel(epochMillis: Long): String =
+    java.time.Instant.ofEpochMilli(epochMillis)
+        .atZone(java.time.ZoneId.systemDefault()).toLocalDate()
+        .format(java.time.format.DateTimeFormatter.ofPattern("EEEE, MMM d"))
+
+/**
+ * DatePicker reports UTC midnight of the chosen calendar day; anchor it to
+ * local noon so the date can't shift when rendered in the local timezone.
+ */
+private fun pickedDateToLocalMillis(utcMidnightMillis: Long): Long =
+    java.time.Instant.ofEpochMilli(utcMidnightMillis)
+        .atZone(java.time.ZoneOffset.UTC).toLocalDate()
+        .atTime(12, 0).atZone(java.time.ZoneId.systemDefault())
+        .toInstant().toEpochMilli()
+
 /** Snaps a weight to the nearest spinner option. */
 private fun nearestWeightOption(weightLb: Double): Double =
     WEIGHT_OPTIONS.minByOrNull { kotlin.math.abs(it - weightLb) } ?: DEFAULT_BAR_WEIGHT
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SessionScreen(onFinished: () -> Unit) {
     val context = LocalContext.current
@@ -71,9 +91,11 @@ fun SessionScreen(onFinished: () -> Unit) {
     val planned by vm.planned.collectAsState()
     val lifts by vm.lifts.collectAsState(initial = emptyList())
     val scope = rememberCoroutineScope()
+    val sessionDate by vm.sessionDate.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
     var expandedIndex by remember { mutableStateOf<Int?>(null) }
     var showDiscardConfirm by remember { mutableStateOf(false) }
+    var showDatePicker by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) { vm.loadDraft() }
 
@@ -94,7 +116,11 @@ fun SessionScreen(onFinished: () -> Unit) {
                 }
             }
         }
-        Spacer(Modifier.height(16.dp))
+        // Tappable date: recording a past workout just means changing this.
+        TextButton(onClick = { showDatePicker = true }) {
+            Text(sessionDateLabel(sessionDate))
+        }
+        Spacer(Modifier.height(8.dp))
         LazyColumn(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -124,6 +150,30 @@ fun SessionScreen(onFinished: () -> Unit) {
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text("Finish workout")
+        }
+    }
+
+    if (showDatePicker) {
+        val pickerState = rememberDatePickerState(initialSelectedDateMillis = sessionDate)
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        pickerState.selectedDateMillis?.let { picked ->
+                            scope.launch { vm.setSessionDate(pickedDateToLocalMillis(picked)) }
+                        }
+                        showDatePicker = false
+                    },
+                ) {
+                    Text("Set date")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) { Text("Cancel") }
+            },
+        ) {
+            DatePicker(state = pickerState)
         }
     }
 
@@ -193,7 +243,8 @@ private fun ExerciseCard(
             if (expanded) {
                 RecordResultForm(
                     initialWeight = exercise.result?.weightLb ?: exercise.advisedWeightLb,
-                    initialRpe = exercise.result?.rpe,
+                    // Default the recorded RPE to the assignment's RPE
+                    initialRpe = exercise.result?.rpe ?: exercise.rpe,
                     initialNotes = exercise.result?.notes.orEmpty(),
                     onRecord = onRecord,
                 )
@@ -209,14 +260,17 @@ private fun ExerciseCard(
 @Composable
 private fun RecordResultForm(
     initialWeight: Double?,
-    initialRpe: Double?,
+    initialRpe: Double,
     initialNotes: String,
     onRecord: (weightLb: Double, rpe: Double, notes: String?) -> Unit,
 ) {
     var weight by remember {
         mutableStateOf(nearestWeightOption(initialWeight ?: DEFAULT_BAR_WEIGHT))
     }
-    var rpe by remember { mutableStateOf(initialRpe ?: 8.0) }
+    var rpe by remember {
+        // The assignment can be RPE 6 but recording starts at 6.5
+        mutableStateOf(initialRpe.coerceIn(RECORDED_RPE_OPTIONS.first(), RECORDED_RPE_OPTIONS.last()))
+    }
     var notes by remember { mutableStateOf(initialNotes) }
 
     Row(

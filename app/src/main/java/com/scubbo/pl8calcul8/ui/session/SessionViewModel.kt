@@ -45,12 +45,22 @@ class SessionViewModel(
     private val _planned = MutableStateFlow<List<PlannedExercise>>(emptyList())
     val planned: StateFlow<List<PlannedExercise>> = _planned.asStateFlow()
 
+    private val _sessionDate = MutableStateFlow(clock())
+    /** The date this workout is recorded under; changeable for retroactive entries. */
+    val sessionDate: StateFlow<Long> = _sessionDate.asStateFlow()
+
+    suspend fun setSessionDate(dateMillis: Long) {
+        _sessionDate.value = dateMillis
+        if (_planned.value.isNotEmpty()) persistDraft()
+    }
+
     suspend fun addLift(name: String): Lift = liftDao.createLift(name)
 
     /** Rebuilds an unfinished session persisted before the process died. */
     suspend fun loadDraft() {
         val drafts = draftDao.load()
         if (drafts.isEmpty()) return
+        drafts.firstNotNullOfOrNull { it.sessionDate }?.let { _sessionDate.value = it }
         _planned.value = drafts.mapNotNull { draft ->
             val lift = liftDao.byId(draft.liftId) ?: return@mapNotNull null
             PlannedExercise(
@@ -79,6 +89,7 @@ class SessionViewModel(
                     resultWeightLb = exercise.result?.weightLb,
                     resultRpe = exercise.result?.rpe,
                     resultNotes = exercise.result?.notes,
+                    sessionDate = _sessionDate.value,
                 )
             }
         )
@@ -86,6 +97,7 @@ class SessionViewModel(
 
     suspend fun discardSession() {
         _planned.value = emptyList()
+        _sessionDate.value = clock()
         draftDao.clear()
     }
 
@@ -123,7 +135,7 @@ class SessionViewModel(
     suspend fun finishSession() {
         val recorded = _planned.value.filter { it.result != null }
         if (recorded.isEmpty()) return
-        val workoutId = workoutDao.insert(Workout(date = clock()))
+        val workoutId = workoutDao.insert(Workout(date = _sessionDate.value))
         recorded.forEach { exercise ->
             val result = exercise.result!!
             workoutDao.insert(
@@ -140,6 +152,7 @@ class SessionViewModel(
             )
         }
         _planned.value = emptyList()
+        _sessionDate.value = clock()
         draftDao.clear()
     }
 }
