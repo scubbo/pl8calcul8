@@ -104,6 +104,36 @@ Last updated: 2026-08-16.
    subdirectory; endpoints and app stay unchanged (track inferred from
    the presented token). Needs Jack sign-off before building.
 
+## Publication-process feedback (2026-08-18, for next session)
+
+Agreed plan for tomorrow: these two first, then per-user backups
+(design already approved in chat: BACKUP_TOKENS=name:token,... with
+per-track subdirectories, app unchanged; PENDING Jack's answer on
+whether his current token stays track "default" or re-keys as "jack").
+
+1. **Auto-tagging releases** - manual `git tag vX.Y` is friction.
+   Jack's suggested shape: an interactive element on the PR (label or
+   comment) marking major/minor bump; post-merge, a workflow computes
+   the next version from the latest tag and pushes the tag (which
+   already triggers release.yml). Notes: PR labels like
+   `release:major` / `release:minor` (default patch/minor?) read in a
+   `pull_request: closed` (merged) workflow; alternatives considered:
+   release-please / semantic-release (conventional-commit driven,
+   heavier convention). Custom label-driven workflow fits the repo.
+2. **Visual PR review** - screenshots or live preview of app changes
+   in the PR. Options researched, in ascending effort:
+   a. Per-PR APK artifact (trivial: build debug APK in PR workflow,
+      attach as artifact; Jack sideloads if curious).
+   b. Screenshot tests rendered on JVM without an emulator - Paparazzi
+      (Cash App) or AGP's Compose Preview Screenshot Testing; a bot
+      comment posts before/after PNGs to the PR.
+   c. Emulator-in-CI (reactivecircus/android-emulator-runner) driving
+      real screens and uploading screenshots - slow but true-to-device.
+   d. "Preview deployment for an app" = streamed emulator services
+      (appetize.io, emulator.wtf) - genuinely app-equivalent of a
+      Vercel preview; external service + upload per PR.
+   Probably (a) + (b) as the pragmatic pair.
+
 ## Jack's ideas for next session (2026-08-17, in his words + notes)
 
 1. **Auto-merge automation PRs in homelab-configuration** when
