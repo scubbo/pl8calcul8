@@ -41,4 +41,24 @@ class MigrationTest {
             assertEquals(0, cursor.getInt(0))
         }
     }
+
+    @Test
+    fun migrate2To3KeepsDrafts() {
+        helper.createDatabase(DB_NAME, 2).apply {
+            execSQL("INSERT INTO Lift (id, name, incrementLb) VALUES (1, 'Squat', 5.0)")
+            execSQL(
+                "INSERT INTO DraftExercise (position, liftId, reps, rpe, sets," +
+                    " advisedWeightLb, resultWeightLb, resultRpe, resultNotes)" +
+                    " VALUES (0, 1, 5, 8.0, 3, 225.0, NULL, NULL, NULL)"
+            )
+            close()
+        }
+
+        val db = helper.runMigrationsAndValidate(DB_NAME, 3, true)
+
+        db.query("SELECT sessionDate FROM DraftExercise").use { cursor ->
+            cursor.moveToFirst()
+            assertEquals(true, cursor.isNull(0))
+        }
+    }
 }

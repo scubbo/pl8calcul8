@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.viewinterop.AndroidView
 
 /**
@@ -27,6 +28,9 @@ fun <T> NumberSpinner(
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         Text(label, style = MaterialTheme.typography.labelMedium)
         AndroidView(
+            // NumberPicker's flanking values fade beyond the widget's frame
+            // and would otherwise draw over neighbouring composables.
+            modifier = Modifier.clipToBounds(),
             factory = { context ->
                 NumberPicker(context).apply {
                     minValue = 0

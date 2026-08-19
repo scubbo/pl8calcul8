@@ -52,6 +52,8 @@ data class DraftExercise(
     val resultWeightLb: Double?,
     val resultRpe: Double?,
     val resultNotes: String?,
+    /** The workout's date (same on every row); null in pre-v3 drafts. */
+    val sessionDate: Long? = null,
 )
 
 @Entity(

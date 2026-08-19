@@ -167,6 +167,37 @@ class SessionViewModelTest {
     }
 
     @Test
+    fun `finishing uses the chosen session date for retroactive workouts`() = runTest {
+        liftDao.insert(Lift(name = "Bench Press"))
+        val bench = liftDao.lifts.value.single()
+        vm.addExercise(bench, reps = 4, rpe = 7.0, sets = 3)
+        vm.recordResult(index = 0, weightLb = 205.0, rpe = 7.5, notes = null)
+
+        vm.setSessionDate(7_000L)
+        vm.finishSession()
+
+        assertEquals(7_000L, workoutDao.workouts.single().date)
+    }
+
+    @Test
+    fun `session date survives process death with the draft`() = runTest {
+        liftDao.insert(Lift(name = "Bench Press"))
+        val bench = liftDao.lifts.value.single()
+        vm.setSessionDate(7_000L)
+        vm.addExercise(bench, reps = 4, rpe = 7.0, sets = 3)
+
+        val revived = SessionViewModel(liftDao, workoutDao, draftDao, clock)
+        revived.loadDraft()
+
+        assertEquals(7_000L, revived.sessionDate.value)
+    }
+
+    @Test
+    fun `session date defaults to now`() = runTest {
+        assertEquals(42_000L, vm.sessionDate.value)
+    }
+
+    @Test
     fun `discarding clears the session and the draft`() = runTest {
         liftDao.insert(Lift(name = "Bench Press"))
         val bench = liftDao.lifts.value.single()
