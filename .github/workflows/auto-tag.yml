@@ -1,0 +1,60 @@
+name: Auto-tag merged PRs
+
+# Cuts a release automatically when a PR merges to main, by pushing a
+# version tag (which triggers release.yml). The bump size is chosen by
+# PR label:
+#   release:major -> vX.Y => v(X+1).0
+#   release:minor -> vX.Y => vX.(Y+1)   (also the default with no label)
+#   release:skip  -> no tag, no release
+# Full context in docs/RELEASING.md.
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+jobs:
+  tag:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # to push the tag
+      actions: write # to dispatch the release workflow
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # need tags to compute the next version
+
+      - name: Compute and push next version tag
+        env:
+          LABELS: ${{ join(github.event.pull_request.labels.*.name, ' ') }}
+          MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          if [[ " $LABELS " == *" release:skip "* ]]; then
+            echo "release:skip label present - not tagging"
+            exit 0
+          fi
+
+          # Latest existing vX.Y tag (default v0.0 when none exist)
+          latest=$(git tag --list 'v*' --sort=-v:refname | head -1)
+          latest=${latest:-v0.0}
+          major=$(echo "${latest#v}" | cut -d. -f1)
+          minor=$(echo "${latest#v}" | cut -d. -f2)
+
+          if [[ " $LABELS " == *" release:major "* ]]; then
+            next="v$((major + 1)).0"
+          else
+            next="v${major}.$((minor + 1))"
+          fi
+
+          echo "Tagging $MERGE_SHA as $next (previous: $latest)"
+          git tag "$next" "$MERGE_SHA"
+          git push origin "$next"
+
+          # A tag pushed with GITHUB_TOKEN does not itself trigger the
+          # release workflow (GitHub suppresses workflows fired by
+          # GITHUB_TOKEN events to prevent recursion), so dispatch it
+          # explicitly - workflow_dispatch is exempt from that rule.
+          gh workflow run release.yml --ref "$next" --repo "$GITHUB_REPOSITORY"
