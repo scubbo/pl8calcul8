@@ -1,10 +1,14 @@
 name: Release app
 
-# Cutting a release: tag a commit `vX.Y` and push the tag.
-# Full walkthrough in docs/RELEASING.md.
+# Cutting a release: merge a PR to main (auto-tag.yml computes and pushes
+# the next vX.Y tag, then dispatches this workflow), or tag manually and
+# push. Full walkthrough in docs/RELEASING.md.
 on:
   push:
     tags: ["v*"]
+  # auto-tag.yml dispatches this with the new tag as ref, because tags
+  # pushed with GITHUB_TOKEN don't trigger `push` workflows.
+  workflow_dispatch:
 
 jobs:
   release:

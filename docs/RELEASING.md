@@ -55,12 +55,31 @@ https://github.com/scubbo/pl8calcul8/rules or `gh api /repos/scubbo/pl8calcul8/r
 
 ## Cutting a release
 
+**The normal path: merge a PR to main.** Every merged PR is tagged and
+released automatically by `.github/workflows/auto-tag.yml`. Control the
+version bump with a PR label (set it any time before merging):
+
+| Label           | Effect on latest `vX.Y`      |
+|-----------------|------------------------------|
+| *(none)*        | minor bump: `v0.4` → `v0.5`  |
+| `release:minor` | same as above, explicit      |
+| `release:major` | major bump: `v0.4` → `v1.0`  |
+| `release:skip`  | no tag, no release           |
+
+Implementation note: the auto-tag workflow pushes the tag with
+GITHUB_TOKEN, and GitHub deliberately does NOT trigger `push`-on-tag
+workflows from such pushes (recursion guard). So auto-tag.yml also
+explicitly dispatches release.yml with the new tag as its ref —
+that's why release.yml has a `workflow_dispatch` trigger.
+
+**The manual path** still works (e.g. re-releasing an old commit):
+
 ```bash
 git tag v0.3        # version name = tag without the "v"
-git push origin main --tags
+git push origin v0.3
 ```
 
-That's it. The workflow:
+Either way, the release workflow:
 
 * computes `versionCode` as the commit count (`git rev-list --count HEAD`)
   — this must always increase or Android refuses the update, and commit
