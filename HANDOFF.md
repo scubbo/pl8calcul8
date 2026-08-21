@@ -104,6 +104,16 @@ Last updated: 2026-08-16.
    subdirectory; endpoints and app stay unchanged (track inferred from
    the presented token). Needs Jack sign-off before building.
 
+## Small features queued (2026-08-18)
+
+1. **History: workouts view** - alongside the per-lift charting, a
+   "workouts" history: list of past workouts (date + the exercises
+   performed in each). Probably a third mode or a tab on the History
+   screen.
+2. **Session screen: disable "Finish workout" while a result form is
+   open** (i.e. while editing notes/weight/RPE of an exercise) -
+   finishing mid-edit would silently drop the unsaved edit.
+
 ## Publication-process feedback (2026-08-18, for next session)
 
 Agreed plan for tomorrow: these two first, then per-user backups
