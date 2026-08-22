@@ -100,6 +100,46 @@ class HistoryViewModelTest {
     }
 
     @Test
+    fun `workout log lists workouts newest-first with their exercises`() = runTest {
+        val benchId = liftDao.insert(Lift(name = "Bench Press"))
+        val squatId = liftDao.insert(Lift(name = "Squat"))
+        workoutDao.liftNames = mapOf(benchId to "Bench Press", squatId to "Squat")
+        val w1 = workoutDao.insert(Workout(date = 1_000L))
+        val w2 = workoutDao.insert(Workout(date = 2_000L))
+        workoutDao.insert(
+            Exercise(
+                workoutId = w1, liftId = benchId,
+                assignedReps = 5, assignedRpe = 8.0, sets = 3,
+                weightLb = 185.0, rpe = 8.0, notes = "solid",
+            )
+        )
+        workoutDao.insert(
+            Exercise(
+                workoutId = w2, liftId = benchId,
+                assignedReps = 4, assignedRpe = 7.0, sets = 3,
+                weightLb = 190.0, rpe = 7.5,
+            )
+        )
+        workoutDao.insert(
+            Exercise(
+                workoutId = w2, liftId = squatId,
+                assignedReps = 5, assignedRpe = 8.0, sets = 3,
+                weightLb = 245.0, rpe = 8.0,
+            )
+        )
+
+        vm.loadWorkoutLog()
+
+        val log = vm.workoutLog.value
+        assertEquals(2, log.size)
+        assertEquals(2_000L, log[0].date)
+        assertEquals(listOf("Bench Press", "Squat"), log[0].exercises.map { it.liftName })
+        assertEquals(190.0, log[0].exercises[0].weightLb, 1e-9)
+        assertEquals(1_000L, log[1].date)
+        assertEquals("solid", log[1].exercises.single().notes)
+    }
+
+    @Test
     fun `switching metric recomputes series as tonnage`() = runTest {
         val bench = Lift(id = 1, name = "Bench Press")
         record(bench.id, date = 1_000L, weightLb = 200.0, reps = 5, rpe = 8.0)

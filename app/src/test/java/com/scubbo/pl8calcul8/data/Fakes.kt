@@ -75,6 +75,21 @@ class FakeWorkoutDao : WorkoutDao {
                 )
             }
 
+    var liftNames: Map<Long, String> = emptyMap()
+
+    override suspend fun workoutLog(): List<WorkoutLogRow> =
+        exercises
+            .sortedWith(compareByDescending<Exercise> { workoutDate(it.workoutId) }.thenBy { it.id })
+            .map {
+                WorkoutLogRow(
+                    workoutId = it.workoutId, date = workoutDate(it.workoutId),
+                    liftName = liftNames[it.liftId] ?: "lift-${it.liftId}",
+                    weightLb = it.weightLb, assignedReps = it.assignedReps,
+                    assignedRpe = it.assignedRpe, sets = it.sets, rpe = it.rpe,
+                    notes = it.notes,
+                )
+            }
+
     override suspend fun dumpWorkouts(): List<Workout> = workouts.toList()
 
     override suspend fun dumpExercises(): List<Exercise> = exercises.toList()

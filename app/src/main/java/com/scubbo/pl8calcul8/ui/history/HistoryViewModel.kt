@@ -19,6 +19,23 @@ enum class HistoryMetric { E1RM, TONNAGE }
 /** One lift's chart line in multi-lift mode. */
 data class LiftSeries(val lift: Lift, val points: List<ChartPoint>)
 
+/** One exercise within a logged workout. */
+data class LoggedExercise(
+    val liftName: String,
+    val weightLb: Double,
+    val assignedReps: Int,
+    val assignedRpe: Double,
+    val sets: Int,
+    val rpe: Double,
+    val notes: String?,
+)
+
+/** One workout in the all-workouts log. */
+data class LoggedWorkout(
+    val date: Long,
+    val exercises: List<LoggedExercise>,
+)
+
 private fun ExerciseHistoryEntry.oneRepMax(): Double =
     RpeCalculator.estimateOneRepMax(weightLb = weightLb, reps = assignedReps, rpe = rpe)
 
@@ -57,6 +74,30 @@ class HistoryViewModel(
         val ascending = history.asReversed()
         _oneRepMaxPoints.value = ascending.map { it.date to it.oneRepMax() }
         _tonnagePoints.value = ascending.map { it.date to it.tonnage() }
+    }
+
+    // Workout-log mode
+
+    private val _workoutLog = MutableStateFlow<List<LoggedWorkout>>(emptyList())
+    /** All workouts, newest first, each with its exercises in recorded order. */
+    val workoutLog: StateFlow<List<LoggedWorkout>> = _workoutLog.asStateFlow()
+
+    suspend fun loadWorkoutLog() {
+        _workoutLog.value = workoutDao.workoutLog()
+            .groupBy { it.workoutId }
+            .map { (_, rows) ->
+                LoggedWorkout(
+                    date = rows.first().date,
+                    exercises = rows.map {
+                        LoggedExercise(
+                            liftName = it.liftName, weightLb = it.weightLb,
+                            assignedReps = it.assignedReps, assignedRpe = it.assignedRpe,
+                            sets = it.sets, rpe = it.rpe, notes = it.notes,
+                        )
+                    },
+                )
+            }
+            .sortedByDescending { it.date }
     }
 
     // Multi-lift mode

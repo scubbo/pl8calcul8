@@ -148,6 +148,36 @@ class AppDatabaseTest {
     }
 
     @Test
+    fun workoutLogGroupsExercisesByWorkoutNewestFirst() = runBlocking {
+        val benchId = db.liftDao().insert(Lift(name = "Bench Press"))
+        val squatId = db.liftDao().insert(Lift(name = "Squat"))
+        val w1 = db.workoutDao().insert(Workout(date = 1_000L))
+        val w2 = db.workoutDao().insert(Workout(date = 2_000L))
+        db.workoutDao().insert(
+            Exercise(
+                workoutId = w1, liftId = benchId,
+                assignedReps = 5, assignedRpe = 8.0, sets = 3,
+                weightLb = 185.0, rpe = 8.0, notes = "solid",
+            )
+        )
+        db.workoutDao().insert(
+            Exercise(
+                workoutId = w2, liftId = squatId,
+                assignedReps = 5, assignedRpe = 8.0, sets = 3,
+                weightLb = 245.0, rpe = 8.0,
+            )
+        )
+
+        val rows = db.workoutDao().workoutLog()
+
+        assertEquals(2, rows.size)
+        assertEquals(2_000L, rows[0].date)
+        assertEquals("Squat", rows[0].liftName)
+        assertEquals(1_000L, rows[1].date)
+        assertEquals("solid", rows[1].notes)
+    }
+
+    @Test
     fun draftRoundTripAndClear() = runBlocking {
         val liftId = db.liftDao().insert(Lift(name = "Squat"))
         val drafts = listOf(
