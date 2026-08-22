@@ -62,6 +62,19 @@ data class ExerciseHistoryEntry(
     val notes: String?,
 )
 
+/** One exercise row of the all-workouts log, flat; grouped by date in the UI layer. */
+data class WorkoutLogRow(
+    val workoutId: Long,
+    val date: Long,
+    val liftName: String,
+    val weightLb: Double,
+    val assignedReps: Int,
+    val assignedRpe: Double,
+    val sets: Int,
+    val rpe: Double,
+    val notes: String?,
+)
+
 @Dao
 interface WorkoutDao {
     @Insert
@@ -92,6 +105,20 @@ interface WorkoutDao {
         """
     )
     suspend fun historyForLift(liftId: Long): List<ExerciseHistoryEntry>
+
+    @Query(
+        """
+        SELECT w.id AS workoutId, w.date AS date, l.name AS liftName,
+               e.weightLb AS weightLb, e.assignedReps AS assignedReps,
+               e.assignedRpe AS assignedRpe, e.sets AS sets, e.rpe AS rpe,
+               e.notes AS notes
+        FROM Exercise e
+        JOIN Workout w ON e.workoutId = w.id
+        JOIN Lift l ON e.liftId = l.id
+        ORDER BY w.date DESC, e.id ASC
+        """
+    )
+    suspend fun workoutLog(): List<WorkoutLogRow>
 
     @Query("SELECT * FROM Workout")
     suspend fun dumpWorkouts(): List<Workout>

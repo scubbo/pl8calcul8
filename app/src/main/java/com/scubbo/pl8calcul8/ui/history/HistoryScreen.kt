@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
@@ -21,6 +22,7 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -69,7 +71,7 @@ fun HistoryScreen() {
     val context = LocalContext.current
     val db = remember { AppDatabase.get(context) }
     val vm: HistoryViewModel = viewModel { HistoryViewModel(db.liftDao(), db.workoutDao()) }
-    var compareMode by remember { mutableStateOf(false) }
+    var mode by remember { mutableStateOf(HistoryMode.SINGLE_LIFT) }
 
     Column(
         modifier = Modifier
@@ -78,30 +80,84 @@ fun HistoryScreen() {
     ) {
         Text("History", style = MaterialTheme.typography.headlineMedium)
         Spacer(Modifier.height(16.dp))
-        ModeSelector(compareMode, onChange = { compareMode = it })
+        ModeSelector(mode, onChange = { mode = it })
         Spacer(Modifier.height(16.dp))
-        if (compareMode) {
-            CompareLifts(vm)
-        } else {
-            SingleLift(vm)
+        when (mode) {
+            HistoryMode.SINGLE_LIFT -> SingleLift(vm)
+            HistoryMode.COMPARE -> CompareLifts(vm)
+            HistoryMode.WORKOUTS -> WorkoutLog(vm)
         }
     }
 }
 
+private enum class HistoryMode(val label: String) {
+    SINGLE_LIFT("Lift"),
+    COMPARE("Compare"),
+    WORKOUTS("Workouts"),
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ModeSelector(compareMode: Boolean, onChange: (Boolean) -> Unit) {
+private fun ModeSelector(mode: HistoryMode, onChange: (HistoryMode) -> Unit) {
     SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-        SegmentedButton(
-            selected = !compareMode,
-            onClick = { onChange(false) },
-            shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
-        ) { Text("Single lift") }
-        SegmentedButton(
-            selected = compareMode,
-            onClick = { onChange(true) },
-            shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
-        ) { Text("Compare lifts") }
+        HistoryMode.entries.forEachIndexed { index, candidate ->
+            SegmentedButton(
+                selected = mode == candidate,
+                onClick = { onChange(candidate) },
+                shape = SegmentedButtonDefaults.itemShape(index = index, count = HistoryMode.entries.size),
+            ) { Text(candidate.label) }
+        }
+    }
+}
+
+@Composable
+private fun WorkoutLog(vm: HistoryViewModel) {
+    val log by vm.workoutLog.collectAsState()
+    LaunchedEffect(Unit) { vm.loadWorkoutLog() }
+
+    if (log.isEmpty()) {
+        Text(
+            "No workouts recorded yet.",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        return
+    }
+    LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        items(log) { workout ->
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(12.dp)) {
+                    Text(tableDate(workout.date), style = MaterialTheme.typography.titleMedium)
+                    Spacer(Modifier.height(4.dp))
+                    workout.exercises.forEach { exercise ->
+                        Row(modifier = Modifier.fillMaxWidth()) {
+                            Text(
+                                exercise.liftName,
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.weight(1.2f),
+                            )
+                            Text(
+                                "${exercise.assignedReps}@${rpeLabel(exercise.assignedRpe)} × ${exercise.sets}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.weight(1f),
+                            )
+                            Text(
+                                "${weightLabel(exercise.weightLb)} lb @ ${rpeLabel(exercise.rpe)}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
+                        exercise.notes?.let {
+                            Text(
+                                it,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 

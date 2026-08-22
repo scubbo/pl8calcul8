@@ -146,7 +146,9 @@ fun SessionScreen(onFinished: () -> Unit) {
         Spacer(Modifier.height(8.dp))
         Button(
             onClick = { scope.launch { vm.finishSession(); onFinished() } },
-            enabled = planned.any { it.result != null },
+            // Disabled while a result form is open: finishing mid-edit would
+            // silently drop the unsaved edit.
+            enabled = planned.any { it.result != null } && expandedIndex == null,
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text("Finish workout")
@@ -247,6 +249,7 @@ private fun ExerciseCard(
                     initialRpe = exercise.result?.rpe ?: exercise.rpe,
                     initialNotes = exercise.result?.notes.orEmpty(),
                     onRecord = onRecord,
+                    onCancel = onToggle,
                 )
             } else {
                 TextButton(onClick = onToggle) {
@@ -263,6 +266,7 @@ private fun RecordResultForm(
     initialRpe: Double,
     initialNotes: String,
     onRecord: (weightLb: Double, rpe: Double, notes: String?) -> Unit,
+    onCancel: () -> Unit,
 ) {
     var weight by remember {
         mutableStateOf(nearestWeightOption(initialWeight ?: DEFAULT_BAR_WEIGHT))
@@ -302,11 +306,16 @@ private fun RecordResultForm(
         modifier = Modifier.fillMaxWidth(),
     )
     Spacer(Modifier.height(8.dp))
-    Button(
-        onClick = { onRecord(weight, rpe, notes) },
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Text("Save result")
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        OutlinedButton(onClick = onCancel, modifier = Modifier.weight(1f)) {
+            Text("Cancel")
+        }
+        Button(
+            onClick = { onRecord(weight, rpe, notes) },
+            modifier = Modifier.weight(2f),
+        ) {
+            Text("Save result")
+        }
     }
 }
 
