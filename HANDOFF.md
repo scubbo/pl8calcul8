@@ -104,6 +104,16 @@ Last updated: 2026-08-16.
    subdirectory; endpoints and app stay unchanged (track inferred from
    the presented token). Needs Jack sign-off before building.
 
+## Jack's priorities (re-stated 2026-08-22)
+
+1. **Backfilling historical workouts** - basic version SHIPPED in v0.4
+   (date row on session screen). If Jack wants more, likely shapes:
+   bulk/quick entry screen for many past workouts, or CSV import.
+   ASK what's missing from the current flow before building.
+2. **Symmetric Strength calculations** - already in ideas list below;
+   depends on bodyweight tracking. Next major feature after
+   backup-tracks lands.
+
 ## Small features queued (2026-08-18)
 
 1. **History: workouts view** - alongside the per-lift charting, a

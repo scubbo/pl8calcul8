@@ -42,6 +42,20 @@ deploy automation (client-id `Iv23linrv3EjCnSWuWoS`). It needs:
 
 * repo secret `DEPLOYMENT_APP_PRIVATE_KEY` (same PEM as in blog-content's
   secrets): `gh secret set DEPLOYMENT_APP_PRIVATE_KEY --repo scubbo/pl8calcul8 < key.pem`
+
+## Backup tracks (multi-user)
+
+The server supports multiple isolated backup "tracks", one per token,
+configured via `BACKUP_TOKENS=name:token,name:token` (each track's
+backups live in `$DATA_DIR/<name>/`). The legacy `BACKUP_TOKEN=<token>`
+form still works as a single track named `default`; on startup, any
+pre-track backups found loose in `$DATA_DIR` are moved into the first
+configured track's directory.
+
+To add a user: add `name:token` to the `backup-tokens` key of the
+`pl8calcul8-secrets` k8s Secret (see the chart's `secret.example.yaml`)
+and restart the deployment. Track names become directory names:
+letters, digits, `_`, `-` only.
 * the App's installation to include `homelab-configuration`
   (github.com → Settings → Integrations → the deployment app → Repository
   access). If it's scoped to selected repositories, add it there.
