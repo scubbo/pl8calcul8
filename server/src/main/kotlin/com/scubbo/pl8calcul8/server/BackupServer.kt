@@ -10,6 +10,7 @@ import io.ktor.server.auth.UserIdPrincipal
 import io.ktor.server.auth.authenticate
 import io.ktor.server.auth.authentication
 import io.ktor.server.auth.bearer
+import io.ktor.server.auth.principal
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.request.receive
@@ -29,9 +30,32 @@ import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
 data class BackupConfig(
-    val token: String,
+    /** token -> track name; each track's backups are isolated. */
+    val tracks: Map<String, String>,
     val dataDir: Path,
 )
+
+private val TRACK_NAME = Regex("[A-Za-z0-9_-]+")
+
+/**
+ * Parses the BACKUP_TOKENS env format: comma-separated name:token pairs,
+ * e.g. "jack:abc123,anna:xyz789". Returns token -> track name.
+ */
+fun parseTracks(spec: String): Map<String, String> {
+    val pairs = spec.split(",").map { entry ->
+        val parts = entry.split(":", limit = 2)
+        require(parts.size == 2 && parts[0].isNotBlank() && parts[1].isNotBlank()) {
+            "BACKUP_TOKENS entries must be name:token, got '$entry'"
+        }
+        require(TRACK_NAME.matches(parts[0])) {
+            "track name '${parts[0]}' must match ${TRACK_NAME.pattern} (it becomes a directory name)"
+        }
+        parts[0] to parts[1]
+    }
+    require(pairs.map { it.first }.toSet().size == pairs.size) { "duplicate track names" }
+    require(pairs.map { it.second }.toSet().size == pairs.size) { "duplicate tokens" }
+    return pairs.associate { (name, token) -> token to name }
+}
 
 private val json = Json { prettyPrint = true }
 
@@ -55,7 +79,11 @@ class BackupStore(private val dataDir: Path) {
 }
 
 fun Application.backupServer(config: BackupConfig) {
-    val store = BackupStore(config.dataDir)
+    val stores = config.tracks.values.associateWith { track ->
+        BackupStore(config.dataDir.resolve(track))
+    }
+    fun io.ktor.server.routing.RoutingContext.store(): BackupStore =
+        stores.getValue(call.principal<UserIdPrincipal>()!!.name)
 
     install(ContentNegotiation) {
         json()
@@ -74,7 +102,7 @@ fun Application.backupServer(config: BackupConfig) {
     authentication {
         bearer("backup-token") {
             authenticate { credential ->
-                if (credential.token == config.token) UserIdPrincipal("client") else null
+                config.tracks[credential.token]?.let { UserIdPrincipal(it) }
             }
         }
     }
@@ -90,11 +118,11 @@ fun Application.backupServer(config: BackupConfig) {
         authenticate("backup-token") {
             post("/backup") {
                 val payload = call.receive<BackupPayload>()
-                store.save(payload)
+                store().save(payload)
                 call.respond(HttpStatusCode.Created)
             }
             get("/restore") {
-                val latest = store.latest()
+                val latest = store().latest()
                 if (latest == null) {
                     call.respondText("No backups yet", status = HttpStatusCode.NotFound)
                 } else {
@@ -102,7 +130,7 @@ fun Application.backupServer(config: BackupConfig) {
                 }
             }
             get("/history") {
-                val latest = store.latest()
+                val latest = store().latest()
                 if (latest == null) {
                     call.respondText("No backups yet", status = HttpStatusCode.NotFound)
                 } else {

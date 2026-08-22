@@ -22,6 +22,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 private const val TOKEN = "test-secret"
+private const val OTHER_TOKEN = "other-secret"
 
 private val SAMPLE = BackupPayload(
     lifts = listOf(BackupLift(id = 1, name = "Bench Press", incrementLb = 5.0)),
@@ -41,7 +42,12 @@ class BackupServerTest {
         val dataDir = Files.createTempDirectory("pl8-backup-test")
         testApplication {
             application {
-                backupServer(BackupConfig(token = TOKEN, dataDir = dataDir))
+                backupServer(
+                    BackupConfig(
+                        tracks = mapOf(TOKEN to "tester", OTHER_TOKEN to "other"),
+                        dataDir = dataDir,
+                    )
+                )
             }
             val client = createClient {
                 install(io.ktor.client.plugins.contentnegotiation.ContentNegotiation) {
@@ -50,6 +56,50 @@ class BackupServerTest {
             }
             block(client)
         }
+    }
+
+    @Test
+    fun `tracks are isolated by token`() = withServer { client ->
+        client.post("/backup") {
+            bearerAuth(TOKEN)
+            contentType(ContentType.Application.Json)
+            setBody(SAMPLE)
+        }
+
+        // The other track sees no backup...
+        assertEquals(
+            HttpStatusCode.NotFound,
+            client.get("/restore") { bearerAuth(OTHER_TOKEN) }.status,
+        )
+
+        // ...until it uploads its own, which doesn't clobber the first
+        val otherPayload = SAMPLE.copy(
+            lifts = listOf(BackupLift(id = 1, name = "Squat", incrementLb = 10.0)),
+        )
+        client.post("/backup") {
+            bearerAuth(OTHER_TOKEN)
+            contentType(ContentType.Application.Json)
+            setBody(otherPayload)
+        }
+
+        val mine: BackupPayload = client.get("/restore") { bearerAuth(TOKEN) }.body()
+        val theirs: BackupPayload = client.get("/restore") { bearerAuth(OTHER_TOKEN) }.body()
+        assertEquals("Bench Press", mine.lifts.single().name)
+        assertEquals("Squat", theirs.lifts.single().name)
+    }
+
+    @Test
+    fun `config parses BACKUP_TOKENS format`() {
+        val tracks = parseTracks("jack:abc123,anna:xyz789")
+        assertEquals(mapOf("abc123" to "jack", "xyz789" to "anna"), tracks)
+    }
+
+    @Test
+    fun `config rejects malformed BACKUP_TOKENS`() {
+        kotlin.test.assertFailsWith<IllegalArgumentException> { parseTracks("no-colon-here") }
+        kotlin.test.assertFailsWith<IllegalArgumentException> { parseTracks("dup:a,dup:b") }
+        kotlin.test.assertFailsWith<IllegalArgumentException> { parseTracks("a:same,b:same") }
+        kotlin.test.assertFailsWith<IllegalArgumentException> { parseTracks("bad/name:tok") }
     }
 
     @Test
