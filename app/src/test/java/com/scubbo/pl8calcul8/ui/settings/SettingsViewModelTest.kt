@@ -6,34 +6,14 @@ import com.scubbo.pl8calcul8.data.FakeLiftDao
 import com.scubbo.pl8calcul8.data.FakeWorkoutDao
 import com.scubbo.pl8calcul8.data.Lift
 import com.scubbo.pl8calcul8.data.Workout
-import com.scubbo.pl8calcul8.data.backup.BackupApi
 import com.scubbo.pl8calcul8.data.backup.BackupException
+import com.scubbo.pl8calcul8.data.backup.FakeBackupApi
+import com.scubbo.pl8calcul8.data.backup.FakeConfigStore
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-
-private class FakeBackupApi : BackupApi {
-    var uploaded: BackupPayload? = null
-    var stored: BackupPayload? = null
-    var failWith: Exception? = null
-
-    override suspend fun upload(payload: BackupPayload) {
-        failWith?.let { throw it }
-        uploaded = payload
-    }
-
-    override suspend fun download(): BackupPayload? {
-        failWith?.let { throw it }
-        return stored
-    }
-}
-
-private class FakeConfigStore : BackupConfigStore {
-    override var serverUrl: String = ""
-    override var token: String = ""
-}
 
 class SettingsViewModelTest {
     private val liftDao = FakeLiftDao()

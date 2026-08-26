@@ -40,6 +40,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.scubbo.pl8calcul8.calc.RpeChart
 import com.scubbo.pl8calcul8.data.AppDatabase
 import com.scubbo.pl8calcul8.data.Lift
+import com.scubbo.pl8calcul8.data.backup.BackupUploader
+import com.scubbo.pl8calcul8.data.backup.PrefsBackupConfigStore
 import com.scubbo.pl8calcul8.ui.components.LiftDropdown
 import com.scubbo.pl8calcul8.ui.components.NewLiftDialog
 import com.scubbo.pl8calcul8.ui.components.NumberSpinner
@@ -86,7 +88,15 @@ fun SessionScreen(onFinished: () -> Unit) {
     val context = LocalContext.current
     val db = remember { AppDatabase.get(context) }
     val vm: SessionViewModel = viewModel {
-        SessionViewModel(db.liftDao(), db.workoutDao(), db.draftDao())
+        val uploader = BackupUploader(
+            liftDao = db.liftDao(),
+            workoutDao = db.workoutDao(),
+            configStore = PrefsBackupConfigStore(context.applicationContext),
+        )
+        SessionViewModel(
+            db.liftDao(), db.workoutDao(), db.draftDao(),
+            afterFinish = { uploader.backup() },
+        )
     }
     val planned by vm.planned.collectAsState()
     val lifts by vm.lifts.collectAsState(initial = emptyList())

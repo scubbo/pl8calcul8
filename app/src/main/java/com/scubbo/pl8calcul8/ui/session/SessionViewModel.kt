@@ -38,6 +38,8 @@ class SessionViewModel(
     private val workoutDao: WorkoutDao,
     private val draftDao: DraftDao,
     private val clock: () -> Long = System::currentTimeMillis,
+    /** Runs after a workout is persisted; production hooks up auto-backup. */
+    private val afterFinish: suspend () -> Unit = {},
 ) : ViewModel() {
 
     val lifts: Flow<List<Lift>> = liftDao.all()
@@ -154,5 +156,6 @@ class SessionViewModel(
         _planned.value = emptyList()
         _sessionDate.value = clock()
         draftDao.clear()
+        afterFinish()
     }
 }

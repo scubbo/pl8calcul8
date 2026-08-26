@@ -155,6 +155,36 @@ class SessionViewModelTest {
     }
 
     @Test
+    fun `finishing triggers the after-finish hook`() = runTest {
+        var hookRan = false
+        val hooked = SessionViewModel(
+            liftDao, workoutDao, draftDao, clock,
+            afterFinish = { hookRan = true },
+        )
+        liftDao.insert(Lift(name = "Bench Press"))
+        val bench = liftDao.lifts.value.single()
+        hooked.addExercise(bench, reps = 4, rpe = 7.0, sets = 3)
+        hooked.recordResult(index = 0, weightLb = 205.0, rpe = 7.5, notes = null)
+
+        hooked.finishSession()
+
+        assertTrue(hookRan)
+    }
+
+    @Test
+    fun `finishing nothing does not run the hook`() = runTest {
+        var hookRan = false
+        val hooked = SessionViewModel(
+            liftDao, workoutDao, draftDao, clock,
+            afterFinish = { hookRan = true },
+        )
+
+        hooked.finishSession()
+
+        assertEquals(false, hookRan)
+    }
+
+    @Test
     fun `finishing clears the draft`() = runTest {
         liftDao.insert(Lift(name = "Bench Press"))
         val bench = liftDao.lifts.value.single()
