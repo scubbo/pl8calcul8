@@ -6,8 +6,8 @@ import com.scubbo.pl8calcul8.data.LiftDao
 import com.scubbo.pl8calcul8.data.WorkoutDao
 import com.scubbo.pl8calcul8.data.backup.BackupApi
 import com.scubbo.pl8calcul8.data.backup.BackupException
+import com.scubbo.pl8calcul8.data.backup.BackupUploader
 import com.scubbo.pl8calcul8.data.backup.KtorBackupApi
-import com.scubbo.pl8calcul8.data.backup.buildPayload
 import com.scubbo.pl8calcul8.data.backup.toExercises
 import com.scubbo.pl8calcul8.data.backup.toLifts
 import com.scubbo.pl8calcul8.data.backup.toWorkouts
@@ -33,6 +33,8 @@ class SettingsViewModel(
     private val runInTransaction: suspend (suspend () -> Unit) -> Unit = { it() },
 ) : ViewModel() {
 
+    private val uploader = BackupUploader(liftDao, workoutDao, configStore, apiFactory)
+
     val lifts: Flow<List<Lift>> = liftDao.all()
 
     private val _serverUrl = MutableStateFlow(configStore.serverUrl)
@@ -57,25 +59,10 @@ class SettingsViewModel(
         _token.value = configStore.token
     }
 
-    fun isConfigured(): Boolean =
-        configStore.serverUrl.isNotBlank() && configStore.token.isNotBlank()
+    fun isConfigured(): Boolean = uploader.isConfigured()
 
     suspend fun backup() {
-        val api = apiFactory(configStore.serverUrl, configStore.token)
-        try {
-            val payload = buildPayload(
-                lifts = liftDao.dump(),
-                workouts = workoutDao.dumpWorkouts(),
-                exercises = workoutDao.dumpExercises(),
-            )
-            api.upload(payload)
-            _backupStatus.value =
-                "Backed up ${payload.workouts.size} workouts (${payload.exercises.size} exercises)."
-        } catch (e: BackupException) {
-            _backupStatus.value = e.message
-        } catch (e: Exception) {
-            _backupStatus.value = "Backup failed: ${e.message}"
-        }
+        _backupStatus.value = uploader.backup()
     }
 
     suspend fun restore() {
