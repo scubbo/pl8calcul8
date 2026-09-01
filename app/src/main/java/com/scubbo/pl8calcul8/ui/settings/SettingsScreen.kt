@@ -57,6 +57,7 @@ fun SettingsScreen() {
         SettingsViewModel(
             liftDao = db.liftDao(),
             workoutDao = db.workoutDao(),
+            bodyweightDao = db.bodyweightDao(),
             configStore = PrefsBackupConfigStore(context.applicationContext),
             runInTransaction = { block -> db.withTransaction { block() } },
         )

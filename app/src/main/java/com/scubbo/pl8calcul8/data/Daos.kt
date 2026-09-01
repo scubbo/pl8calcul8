@@ -23,8 +23,26 @@ interface LiftDao {
     @Query("SELECT * FROM Lift WHERE id = :id")
     suspend fun byId(id: Long): Lift?
 
+    @Query("UPDATE Lift SET scoringCategory = :category WHERE id = :liftId")
+    suspend fun updateScoringCategory(liftId: Long, category: String?)
+
     @Query("DELETE FROM Lift")
     suspend fun deleteAll()
+}
+
+@Dao
+interface BodyweightDao {
+    @Insert
+    suspend fun insert(entry: BodyweightEntry): Long
+
+    @Query("SELECT * FROM BodyweightEntry ORDER BY date DESC")
+    fun all(): Flow<List<BodyweightEntry>>
+
+    @Query("SELECT * FROM BodyweightEntry ORDER BY date DESC LIMIT 1")
+    suspend fun latest(): BodyweightEntry?
+
+    @Query("DELETE FROM BodyweightEntry WHERE id = :id")
+    suspend fun delete(id: Long)
 }
 
 @Dao
