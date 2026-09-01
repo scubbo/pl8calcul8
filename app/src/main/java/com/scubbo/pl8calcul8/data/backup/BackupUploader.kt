@@ -1,14 +1,17 @@
 package com.scubbo.pl8calcul8.data.backup
 
+import com.scubbo.pl8calcul8.data.BodyweightDao
 import com.scubbo.pl8calcul8.data.LiftDao
 import com.scubbo.pl8calcul8.data.WorkoutDao
 import com.scubbo.pl8calcul8.ui.settings.BackupConfigStore
+import kotlinx.coroutines.flow.first
 
 /** Uploads the whole database as a backup; used by Settings and after workouts. */
 class BackupUploader(
     private val liftDao: LiftDao,
     private val workoutDao: WorkoutDao,
     private val configStore: BackupConfigStore,
+    private val bodyweightDao: BodyweightDao,
     private val apiFactory: (url: String, token: String) -> BackupApi =
         { url, token -> KtorBackupApi(url, token) },
 ) {
@@ -28,6 +31,7 @@ class BackupUploader(
                 lifts = liftDao.dump(),
                 workouts = workoutDao.dumpWorkouts(),
                 exercises = workoutDao.dumpExercises(),
+                bodyweights = bodyweightDao.all().first(),
             )
             api.upload(payload)
             "Backed up ${payload.workouts.size} workouts (${payload.exercises.size} exercises)."

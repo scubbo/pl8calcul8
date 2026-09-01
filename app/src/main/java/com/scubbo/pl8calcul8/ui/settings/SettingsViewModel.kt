@@ -2,15 +2,18 @@ package com.scubbo.pl8calcul8.ui.settings
 
 import androidx.lifecycle.ViewModel
 import com.scubbo.pl8calcul8.data.Lift
+import com.scubbo.pl8calcul8.data.BodyweightDao
 import com.scubbo.pl8calcul8.data.LiftDao
 import com.scubbo.pl8calcul8.data.WorkoutDao
 import com.scubbo.pl8calcul8.data.backup.BackupApi
 import com.scubbo.pl8calcul8.data.backup.BackupException
 import com.scubbo.pl8calcul8.data.backup.BackupUploader
 import com.scubbo.pl8calcul8.data.backup.KtorBackupApi
+import com.scubbo.pl8calcul8.data.backup.toBodyweights
 import com.scubbo.pl8calcul8.data.backup.toExercises
 import com.scubbo.pl8calcul8.data.backup.toLifts
 import com.scubbo.pl8calcul8.data.backup.toWorkouts
+import kotlinx.coroutines.flow.first
 import com.scubbo.pl8calcul8.data.createLift
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,6 +29,7 @@ interface BackupConfigStore {
 class SettingsViewModel(
     private val liftDao: LiftDao,
     private val workoutDao: WorkoutDao,
+    private val bodyweightDao: BodyweightDao,
     private val configStore: BackupConfigStore,
     private val apiFactory: (url: String, token: String) -> BackupApi =
         { url, token -> KtorBackupApi(url, token) },
@@ -33,7 +37,8 @@ class SettingsViewModel(
     private val runInTransaction: suspend (suspend () -> Unit) -> Unit = { it() },
 ) : ViewModel() {
 
-    private val uploader = BackupUploader(liftDao, workoutDao, configStore, apiFactory)
+    private val uploader =
+        BackupUploader(liftDao, workoutDao, configStore, bodyweightDao, apiFactory)
 
     val lifts: Flow<List<Lift>> = liftDao.all()
 
@@ -50,6 +55,10 @@ class SettingsViewModel(
 
     suspend fun setIncrement(lift: Lift, incrementLb: Double) {
         liftDao.updateIncrement(lift.id, incrementLb)
+    }
+
+    suspend fun setScoringCategory(lift: Lift, category: String?) {
+        liftDao.updateScoringCategory(lift.id, category)
     }
 
     fun saveConfig(serverUrl: String, token: String) {
@@ -77,9 +86,11 @@ class SettingsViewModel(
                 workoutDao.deleteAllExercises()
                 workoutDao.deleteAllWorkouts()
                 liftDao.deleteAll()
+                bodyweightDao.all().first().forEach { bodyweightDao.delete(it.id) }
                 payload.toLifts().forEach { liftDao.insert(it) }
                 payload.toWorkouts().forEach { workoutDao.insert(it) }
                 payload.toExercises().forEach { workoutDao.insert(it) }
+                payload.toBodyweights().forEach { bodyweightDao.insert(it) }
             }
             _backupStatus.value =
                 "Restored ${payload.workouts.size} workouts (${payload.exercises.size} exercises)."

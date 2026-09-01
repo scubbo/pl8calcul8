@@ -14,6 +14,7 @@ data class BackupPayload(
     val lifts: List<BackupLift>,
     val workouts: List<BackupWorkout>,
     val exercises: List<BackupExercise>,
+    val bodyweights: List<BackupBodyweight> = emptyList(),
 )
 
 @Serializable
@@ -21,6 +22,14 @@ data class BackupLift(
     val id: Long,
     val name: String,
     val incrementLb: Double,
+    val scoringCategory: String? = null,
+)
+
+@Serializable
+data class BackupBodyweight(
+    val id: Long,
+    val date: Long,
+    val weightLb: Double,
 )
 
 @Serializable

@@ -25,9 +25,40 @@ class FakeLiftDao : LiftDao {
 
     override suspend fun byId(id: Long): Lift? = lifts.value.find { it.id == id }
 
+    override suspend fun updateScoringCategory(liftId: Long, category: String?) {
+        lifts.value = lifts.value.map {
+            if (it.id == liftId) it.copy(scoringCategory = category) else it
+        }
+    }
+
     override suspend fun deleteAll() {
         lifts.value = emptyList()
     }
+}
+
+class FakeBodyweightDao : BodyweightDao {
+    val entries = mutableListOf<BodyweightEntry>()
+    private var nextId = 1L
+
+    override suspend fun insert(entry: BodyweightEntry): Long {
+        val id = nextId++
+        entries += entry.copy(id = id)
+        return id
+    }
+
+    override fun all(): Flow<List<BodyweightEntry>> =
+        MutableStateFlow(entries.sortedByDescending { it.date })
+
+    override suspend fun latest(): BodyweightEntry? = entries.maxByOrNull { it.date }
+
+    override suspend fun delete(id: Long) {
+        entries.removeAll { it.id == id }
+    }
+}
+
+class FakeProfileStore : com.scubbo.pl8calcul8.data.ProfileStore {
+    override var birthYear: Int = 0
+    override var sex: com.scubbo.pl8calcul8.calc.Sex = com.scubbo.pl8calcul8.calc.Sex.MALE
 }
 
 class FakeDraftDao : DraftDao {

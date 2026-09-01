@@ -92,6 +92,7 @@ fun SessionScreen(onFinished: () -> Unit) {
             liftDao = db.liftDao(),
             workoutDao = db.workoutDao(),
             configStore = PrefsBackupConfigStore(context.applicationContext),
+            bodyweightDao = db.bodyweightDao(),
         )
         SessionViewModel(
             db.liftDao(), db.workoutDao(), db.draftDao(),

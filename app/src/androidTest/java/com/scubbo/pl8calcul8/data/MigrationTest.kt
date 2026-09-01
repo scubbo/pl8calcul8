@@ -43,6 +43,25 @@ class MigrationTest {
     }
 
     @Test
+    fun migrate3To4KeepsLiftsAndAddsBodyweights() {
+        helper.createDatabase(DB_NAME, 3).apply {
+            execSQL("INSERT INTO Lift (id, name, incrementLb) VALUES (1, 'Squat', 5.0)")
+            close()
+        }
+
+        val db = helper.runMigrationsAndValidate(DB_NAME, 4, true)
+
+        db.query("SELECT scoringCategory FROM Lift").use { cursor ->
+            cursor.moveToFirst()
+            assertEquals(true, cursor.isNull(0))
+        }
+        db.query("SELECT count(*) FROM BodyweightEntry").use { cursor ->
+            cursor.moveToFirst()
+            assertEquals(0, cursor.getInt(0))
+        }
+    }
+
+    @Test
     fun migrate2To3KeepsDrafts() {
         helper.createDatabase(DB_NAME, 2).apply {
             execSQL("INSERT INTO Lift (id, name, incrementLb) VALUES (1, 'Squat', 5.0)")

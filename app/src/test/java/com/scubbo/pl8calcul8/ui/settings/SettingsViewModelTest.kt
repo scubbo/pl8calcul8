@@ -2,6 +2,7 @@ package com.scubbo.pl8calcul8.ui.settings
 
 import com.scubbo.pl8calcul8.backup.BackupPayload
 import com.scubbo.pl8calcul8.data.Exercise
+import com.scubbo.pl8calcul8.data.FakeBodyweightDao
 import com.scubbo.pl8calcul8.data.FakeLiftDao
 import com.scubbo.pl8calcul8.data.FakeWorkoutDao
 import com.scubbo.pl8calcul8.data.Lift
@@ -23,6 +24,7 @@ class SettingsViewModelTest {
     private val vm = SettingsViewModel(
         liftDao = liftDao,
         workoutDao = workoutDao,
+        bodyweightDao = FakeBodyweightDao(),
         configStore = configStore,
         apiFactory = { _, _ -> api },
     )

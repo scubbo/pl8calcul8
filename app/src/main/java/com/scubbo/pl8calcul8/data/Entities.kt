@@ -11,6 +11,20 @@ data class Lift(
     val name: String,
     /** How much to add to the calculated target weight each session. */
     val incrementLb: Double = 5.0,
+    /**
+     * ScoringCategory name when this is a designated "main" lift counted
+     * toward strength scores; null for variants and accessories.
+     */
+    val scoringCategory: String? = null,
+)
+
+/** A dated bodyweight measurement, for strength-standard scaling. */
+@Entity
+data class BodyweightEntry(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    /** Epoch milliseconds. */
+    val date: Long,
+    val weightLb: Double,
 )
 
 @Entity

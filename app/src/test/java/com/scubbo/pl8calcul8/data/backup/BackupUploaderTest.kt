@@ -1,5 +1,6 @@
 package com.scubbo.pl8calcul8.data.backup
 
+import com.scubbo.pl8calcul8.data.FakeBodyweightDao
 import com.scubbo.pl8calcul8.data.FakeLiftDao
 import com.scubbo.pl8calcul8.data.FakeWorkoutDao
 import com.scubbo.pl8calcul8.data.Lift
@@ -19,6 +20,7 @@ class BackupUploaderTest {
         liftDao = liftDao,
         workoutDao = workoutDao,
         configStore = configStore,
+        bodyweightDao = FakeBodyweightDao(),
         apiFactory = { _, _ -> api },
     )
 

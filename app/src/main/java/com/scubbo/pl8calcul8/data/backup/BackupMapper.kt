@@ -1,9 +1,11 @@
 package com.scubbo.pl8calcul8.data.backup
 
+import com.scubbo.pl8calcul8.backup.BackupBodyweight
 import com.scubbo.pl8calcul8.backup.BackupExercise
 import com.scubbo.pl8calcul8.backup.BackupLift
 import com.scubbo.pl8calcul8.backup.BackupPayload
 import com.scubbo.pl8calcul8.backup.BackupWorkout
+import com.scubbo.pl8calcul8.data.BodyweightEntry
 import com.scubbo.pl8calcul8.data.Exercise
 import com.scubbo.pl8calcul8.data.Lift
 import com.scubbo.pl8calcul8.data.Workout
@@ -12,8 +14,14 @@ fun buildPayload(
     lifts: List<Lift>,
     workouts: List<Workout>,
     exercises: List<Exercise>,
+    bodyweights: List<BodyweightEntry> = emptyList(),
 ): BackupPayload = BackupPayload(
-    lifts = lifts.map { BackupLift(id = it.id, name = it.name, incrementLb = it.incrementLb) },
+    lifts = lifts.map {
+        BackupLift(
+            id = it.id, name = it.name, incrementLb = it.incrementLb,
+            scoringCategory = it.scoringCategory,
+        )
+    },
     workouts = workouts.map { BackupWorkout(id = it.id, date = it.date) },
     exercises = exercises.map {
         BackupExercise(
@@ -22,10 +30,18 @@ fun buildPayload(
             sets = it.sets, weightLb = it.weightLb, rpe = it.rpe, notes = it.notes,
         )
     },
+    bodyweights = bodyweights.map {
+        BackupBodyweight(id = it.id, date = it.date, weightLb = it.weightLb)
+    },
 )
 
 fun BackupPayload.toLifts(): List<Lift> =
-    lifts.map { Lift(id = it.id, name = it.name, incrementLb = it.incrementLb) }
+    lifts.map {
+        Lift(
+            id = it.id, name = it.name, incrementLb = it.incrementLb,
+            scoringCategory = it.scoringCategory,
+        )
+    }
 
 fun BackupPayload.toWorkouts(): List<Workout> =
     workouts.map { Workout(id = it.id, date = it.date) }
@@ -38,3 +54,6 @@ fun BackupPayload.toExercises(): List<Exercise> =
             sets = it.sets, weightLb = it.weightLb, rpe = it.rpe, notes = it.notes,
         )
     }
+
+fun BackupPayload.toBodyweights(): List<BodyweightEntry> =
+    bodyweights.map { BodyweightEntry(id = it.id, date = it.date, weightLb = it.weightLb) }
