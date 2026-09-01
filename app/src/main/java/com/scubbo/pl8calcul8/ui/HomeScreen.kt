@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 fun HomeScreen(
     onStartWorkout: () -> Unit,
     onHistory: () -> Unit,
+    onStrength: () -> Unit,
     onSettings: () -> Unit,
 ) {
     Column(
@@ -37,6 +38,10 @@ fun HomeScreen(
         Spacer(Modifier.height(16.dp))
         OutlinedButton(onClick = onHistory, modifier = Modifier.fillMaxWidth()) {
             Text("History")
+        }
+        Spacer(Modifier.height(16.dp))
+        OutlinedButton(onClick = onStrength, modifier = Modifier.fillMaxWidth()) {
+            Text("Strength")
         }
         Spacer(Modifier.height(16.dp))
         OutlinedButton(onClick = onSettings, modifier = Modifier.fillMaxWidth()) {

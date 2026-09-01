@@ -36,6 +36,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.room.withTransaction
+import com.scubbo.pl8calcul8.calc.ScoringCategory
 import com.scubbo.pl8calcul8.data.AppDatabase
 import com.scubbo.pl8calcul8.data.Lift
 import com.scubbo.pl8calcul8.data.backup.PrefsBackupConfigStore
@@ -110,11 +111,12 @@ fun SettingsScreen() {
     }
 
     editing?.let { lift ->
-        EditIncrementDialog(
+        EditLiftDialog(
             lift = lift,
-            onSave = { increment ->
+            onSave = { increment, category ->
                 scope.launch {
                     vm.setIncrement(lift, increment)
+                    vm.setScoringCategory(lift, category)
                     editing = null
                 }
             },
@@ -242,10 +244,11 @@ private fun BackupSection(vm: SettingsViewModel, onRestoreRequested: () -> Unit)
     }
 }
 
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
-private fun EditIncrementDialog(
+private fun EditLiftDialog(
     lift: Lift,
-    onSave: (incrementLb: Double) -> Unit,
+    onSave: (incrementLb: Double, scoringCategory: String?) -> Unit,
     onDismiss: () -> Unit,
 ) {
     var increment by remember {
@@ -253,21 +256,69 @@ private fun EditIncrementDialog(
             INCREMENT_OPTIONS.minByOrNull { kotlin.math.abs(it - lift.incrementLb) } ?: 5.0
         )
     }
+    var category by remember { mutableStateOf(lift.scoringCategory) }
+    var categoryExpanded by remember { mutableStateOf(false) }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(lift.name) },
         text = {
-            NumberSpinner(
-                label = "Increment (lb)",
-                options = INCREMENT_OPTIONS,
-                selected = increment,
-                display = ::incrementLabel,
-                onSelect = { increment = it },
-                modifier = Modifier.fillMaxWidth(),
-            )
+            Column {
+                NumberSpinner(
+                    label = "Increment (lb)",
+                    options = INCREMENT_OPTIONS,
+                    selected = increment,
+                    display = ::incrementLabel,
+                    onSelect = { increment = it },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(Modifier.height(8.dp))
+                // Designating a scoring category makes this a "main" lift
+                // counted on the Strength screen.
+                androidx.compose.material3.ExposedDropdownMenuBox(
+                    expanded = categoryExpanded,
+                    onExpandedChange = { categoryExpanded = it },
+                ) {
+                    OutlinedTextField(
+                        value = category
+                            ?.let { name -> ScoringCategory.entries.find { it.name == name }?.label }
+                            ?: "Not scored",
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Strength scoring") },
+                        trailingIcon = {
+                            androidx.compose.material3.ExposedDropdownMenuDefaults
+                                .TrailingIcon(expanded = categoryExpanded)
+                        },
+                        modifier = Modifier
+                            .menuAnchor(androidx.compose.material3.MenuAnchorType.PrimaryNotEditable)
+                            .fillMaxWidth(),
+                    )
+                    ExposedDropdownMenu(
+                        expanded = categoryExpanded,
+                        onDismissRequest = { categoryExpanded = false },
+                    ) {
+                        androidx.compose.material3.DropdownMenuItem(
+                            text = { Text("Not scored") },
+                            onClick = {
+                                category = null
+                                categoryExpanded = false
+                            },
+                        )
+                        ScoringCategory.entries.forEach { option ->
+                            androidx.compose.material3.DropdownMenuItem(
+                                text = { Text(option.label) },
+                                onClick = {
+                                    category = option.name
+                                    categoryExpanded = false
+                                },
+                            )
+                        }
+                    }
+                }
+            }
         },
         confirmButton = {
-            TextButton(onClick = { onSave(increment) }) { Text("Save") }
+            TextButton(onClick = { onSave(increment, category) }) { Text("Save") }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text("Cancel") }

@@ -17,6 +17,7 @@ import com.scubbo.pl8calcul8.ui.HomeScreen
 import com.scubbo.pl8calcul8.ui.history.HistoryScreen
 import com.scubbo.pl8calcul8.ui.session.SessionScreen
 import com.scubbo.pl8calcul8.ui.settings.SettingsScreen
+import com.scubbo.pl8calcul8.ui.strength.StrengthScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,6 +42,7 @@ fun AppNavigation() {
             HomeScreen(
                 onStartWorkout = { navController.navigate("session") },
                 onHistory = { navController.navigate("history") },
+                onStrength = { navController.navigate("strength") },
                 onSettings = { navController.navigate("settings") },
             )
         }
@@ -48,6 +50,7 @@ fun AppNavigation() {
             SessionScreen(onFinished = { navController.popBackStack() })
         }
         composable("history") { HistoryScreen() }
+        composable("strength") { StrengthScreen() }
         composable("settings") { SettingsScreen() }
     }
 }

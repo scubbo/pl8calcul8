@@ -57,6 +57,10 @@ class SettingsViewModel(
         liftDao.updateIncrement(lift.id, incrementLb)
     }
 
+    suspend fun setScoringCategory(lift: Lift, category: String?) {
+        liftDao.updateScoringCategory(lift.id, category)
+    }
+
     fun saveConfig(serverUrl: String, token: String) {
         configStore.serverUrl = serverUrl.trim()
         configStore.token = token.trim()
