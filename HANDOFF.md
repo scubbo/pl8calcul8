@@ -114,6 +114,26 @@ Last updated: 2026-08-16.
    depends on bodyweight tracking. Next major feature after
    backup-tracks lands.
 
+## Symmetric Strength scope (agreed 2026-09-01)
+
+* Bodyweight: manual entry first (dated log like workouts);
+  Health Connect integration later.
+* Formulas: exact match with symmetricstrength.com NOT required -
+  principled approximation fine. Jack provided a standards screenshot
+  (36yo 220lb male, 1RM): Back Squat 150/225/300/375/435/500/560/625,
+  Deadlift 170/260/345/430/505/575/645/720, Bench 110/170/225/280/325/
+  375/420/465, OHP 75/110/145/180/210/245/275/305, Front Squat 120/180/
+  240/300/350/400/450/500, Pendlay Row 90/135/185/230/265/305/345/380
+  (levels: Untrained/Novice/Intermediate/Proficient/Advanced/
+  Exceptional/Elite/World class). More at
+  symmetricstrength.com/standards. Standards scale with bodyweight
+  (allometric) and age; needs sex too - ASK Jack for profile fields
+  when building (age/sex settings).
+* Lift mapping: user designates "main" lifts for scoring; variants
+  don't count.
+* LATER (Jack's note): some way of associating lift variants (Bench /
+  Paused Bench / Narrow Grip). Form and implications TBD - revisit.
+
 ## Small features queued (2026-08-18)
 
 1. **History: workouts view** - alongside the per-lift charting, a
