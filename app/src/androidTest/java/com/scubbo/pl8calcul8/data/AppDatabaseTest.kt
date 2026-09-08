@@ -34,7 +34,7 @@ class AppDatabaseTest {
         val lifts = db.liftDao().all().first()
         assertEquals(1, lifts.size)
         assertEquals("Bench Press", lifts[0].name)
-        assertEquals(5.0, lifts[0].incrementLb, 1e-9)
+        assertEquals(5.0, lifts[0].incrementLb!!, 1e-9)
     }
 
     @Test
@@ -111,7 +111,17 @@ class AppDatabaseTest {
         db.liftDao().updateIncrement(liftId, 10.0)
 
         val lift = db.liftDao().all().first().single()
-        assertEquals(10.0, lift.incrementLb, 1e-9)
+        assertEquals(10.0, lift.incrementLb!!, 1e-9)
+    }
+
+    @Test
+    fun incrementOverrideCanBeCleared() = runBlocking {
+        val liftId = db.liftDao().insert(Lift(name = "Squat"))
+        db.liftDao().updateIncrement(liftId, 10.0)
+
+        db.liftDao().updateIncrement(liftId, null)
+
+        assertNull(db.liftDao().all().first().single().incrementLb)
     }
 
     @Test
@@ -220,7 +230,7 @@ class AppDatabaseTest {
             assertTrue("expected seeded lifts, got $names", names.containsAll(
                 listOf("Squat", "Bench Press", "Deadlift", "Overhead Press", "Barbell Row")
             ))
-            assertTrue(lifts.all { it.incrementLb == 5.0 })
+        assertTrue(lifts.all { it.incrementLb == null })
         } finally {
             seeded.close()
         }

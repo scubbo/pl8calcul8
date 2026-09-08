@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import com.scubbo.pl8calcul8.calc.RpeCalculator
 import com.scubbo.pl8calcul8.data.DraftDao
 import com.scubbo.pl8calcul8.data.DraftExercise
+import com.scubbo.pl8calcul8.data.DEFAULT_INCREMENT_LB
 import com.scubbo.pl8calcul8.data.Exercise
 import com.scubbo.pl8calcul8.data.Lift
 import com.scubbo.pl8calcul8.data.LiftDao
@@ -112,7 +113,7 @@ class SessionViewModel(
                 previousRpe = it.rpe,
                 assignedReps = reps,
                 assignedRpe = rpe,
-                incrementLb = lift.incrementLb,
+                incrementLb = lift.incrementLb ?: DEFAULT_INCREMENT_LB,
             )
         }
         _planned.value += PlannedExercise(

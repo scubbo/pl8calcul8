@@ -48,7 +48,7 @@ class SettingsViewModel(
 
     suspend fun addLift(name: String): Lift = liftDao.createLift(name)
 
-    suspend fun setIncrement(lift: Lift, incrementLb: Double) {
+    suspend fun setIncrement(lift: Lift, incrementLb: Double?) {
         liftDao.updateIncrement(lift.id, incrementLb)
     }
 

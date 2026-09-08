@@ -15,7 +15,7 @@ class FakeLiftDao : LiftDao {
 
     override fun all(): Flow<List<Lift>> = lifts
 
-    override suspend fun updateIncrement(liftId: Long, incrementLb: Double) {
+    override suspend fun updateIncrement(liftId: Long, incrementLb: Double?) {
         lifts.value = lifts.value.map {
             if (it.id == liftId) it.copy(incrementLb = incrementLb) else it
         }
