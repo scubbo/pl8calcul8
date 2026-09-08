@@ -5,12 +5,14 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
+const val DEFAULT_INCREMENT_LB = 5.0
+
 @Entity(indices = [Index(value = ["name"], unique = true)])
 data class Lift(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
-    /** How much to add to the calculated target weight each session. */
-    val incrementLb: Double = 5.0,
+    /** Overrides the app-wide 5lb progression increment when present. */
+    val incrementLb: Double? = null,
 )
 
 @Entity

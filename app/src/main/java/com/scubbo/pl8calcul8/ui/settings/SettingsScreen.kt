@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.room.withTransaction
 import com.scubbo.pl8calcul8.data.AppDatabase
+import com.scubbo.pl8calcul8.data.DEFAULT_INCREMENT_LB
 import com.scubbo.pl8calcul8.data.Lift
 import com.scubbo.pl8calcul8.data.backup.PrefsBackupConfigStore
 import com.scubbo.pl8calcul8.ui.components.NewLiftDialog
@@ -63,7 +64,8 @@ fun SettingsScreen() {
     }
     val lifts by vm.lifts.collectAsState(initial = emptyList())
     val scope = rememberCoroutineScope()
-    var editing by remember { mutableStateOf<Lift?>(null) }
+    var editingOverride by remember { mutableStateOf<Lift?>(null) }
+    var showOverridePicker by remember { mutableStateOf(false) }
     var showNewLift by remember { mutableStateOf(false) }
     var showRestoreConfirm by remember { mutableStateOf(false) }
 
@@ -76,21 +78,26 @@ fun SettingsScreen() {
             Spacer(Modifier.height(16.dp))
             Text("Settings", style = MaterialTheme.typography.headlineMedium)
             Spacer(Modifier.height(16.dp))
-            Text("Lifts", style = MaterialTheme.typography.titleMedium)
+            Text("Lift increments", style = MaterialTheme.typography.titleMedium)
+            Text(
+                "Default: +5 lb. Add an override for lifts that progress differently.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
             Spacer(Modifier.height(4.dp))
         }
-        items(lifts) { lift ->
+        items(lifts.filter { it.incrementLb != null }) { lift ->
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { editing = lift }
+                    .clickable { editingOverride = lift }
                     .padding(vertical = 12.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(lift.name, style = MaterialTheme.typography.bodyLarge)
                 Text(
-                    "+${incrementLabel(lift.incrementLb)} lb",
+                    "+${incrementLabel(lift.incrementLb!!)} lb",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -98,6 +105,10 @@ fun SettingsScreen() {
             HorizontalDivider()
         }
         item {
+            Spacer(Modifier.height(8.dp))
+            OutlinedButton(onClick = { showOverridePicker = true }, modifier = Modifier.fillMaxWidth()) {
+                Text("Add increment override")
+            }
             Spacer(Modifier.height(8.dp))
             OutlinedButton(onClick = { showNewLift = true }, modifier = Modifier.fillMaxWidth()) {
                 Text("Add lift")
@@ -108,16 +119,36 @@ fun SettingsScreen() {
         }
     }
 
-    editing?.let { lift ->
+    editingOverride?.let { lift ->
         EditIncrementDialog(
             lift = lift,
             onSave = { increment ->
                 scope.launch {
                     vm.setIncrement(lift, increment)
-                    editing = null
+                    editingOverride = null
                 }
             },
-            onDismiss = { editing = null },
+            onClear = {
+                scope.launch {
+                    vm.setIncrement(lift, null)
+                    editingOverride = null
+                }
+            },
+            onDismiss = { editingOverride = null },
+        )
+    }
+
+    if (showOverridePicker) {
+        AddOverrideDialog(
+            lifts = lifts.filter { it.incrementLb == null },
+            onSelect = { lift ->
+                scope.launch {
+                    vm.setIncrement(lift, DEFAULT_INCREMENT_LB)
+                    showOverridePicker = false
+                    editingOverride = lift.copy(incrementLb = DEFAULT_INCREMENT_LB)
+                }
+            },
+            onDismiss = { showOverridePicker = false },
         )
     }
 
@@ -245,11 +276,12 @@ private fun BackupSection(vm: SettingsViewModel, onRestoreRequested: () -> Unit)
 private fun EditIncrementDialog(
     lift: Lift,
     onSave: (incrementLb: Double) -> Unit,
+    onClear: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     var increment by remember {
         mutableStateOf(
-            INCREMENT_OPTIONS.minByOrNull { kotlin.math.abs(it - lift.incrementLb) } ?: 5.0
+            INCREMENT_OPTIONS.minByOrNull { kotlin.math.abs(it - lift.incrementLb!!) } ?: 5.0
         )
     }
     AlertDialog(
@@ -269,7 +301,39 @@ private fun EditIncrementDialog(
             TextButton(onClick = { onSave(increment) }) { Text("Save") }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
+            Row {
+                TextButton(onClick = onClear) { Text("Remove override") }
+                TextButton(onClick = onDismiss) { Text("Cancel") }
+            }
         },
+    )
+}
+
+@Composable
+private fun AddOverrideDialog(
+    lifts: List<Lift>,
+    onSelect: (Lift) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Add increment override") },
+        text = {
+            Column {
+                if (lifts.isEmpty()) {
+                    Text("Every lift already uses an override.")
+                }
+                lifts.forEach { lift ->
+                    TextButton(
+                        onClick = { onSelect(lift) },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(lift.name, modifier = Modifier.fillMaxWidth())
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
     )
 }

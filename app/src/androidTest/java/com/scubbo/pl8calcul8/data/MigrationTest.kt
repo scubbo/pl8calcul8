@@ -61,4 +61,24 @@ class MigrationTest {
             assertEquals(true, cursor.isNull(0))
         }
     }
+
+    @Test
+    fun migrate3To4MakesFiveLbIncrementsImplicitAndKeepsOverrides() {
+        helper.createDatabase(DB_NAME, 3).apply {
+            execSQL("INSERT INTO Lift (id, name, incrementLb) VALUES (1, 'Bench Press', 5.0)")
+            execSQL("INSERT INTO Lift (id, name, incrementLb) VALUES (2, 'Deadlift', 10.0)")
+            close()
+        }
+
+        val db = helper.runMigrationsAndValidate(DB_NAME, 4, true, AppDatabase.migration3To4)
+
+        db.query("SELECT incrementLb FROM Lift WHERE id = 1").use { cursor ->
+            cursor.moveToFirst()
+            assertEquals(true, cursor.isNull(0))
+        }
+        db.query("SELECT incrementLb FROM Lift WHERE id = 2").use { cursor ->
+            cursor.moveToFirst()
+            assertEquals(10.0, cursor.getDouble(0), 1e-9)
+        }
+    }
 }

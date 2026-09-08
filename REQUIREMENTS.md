@@ -6,8 +6,8 @@ conflicts with SPEC.md, this document wins.
 ## Core data model
 
 * **Lift**: a movement (e.g. Bench Press). App ships with a seeded list of
-  common lifts; user can add more. Each lift has a configurable weight
-  increment (default 5lb).
+  common lifts; user can add more. Lifts use the default 5lb progression
+  increment unless explicitly overridden.
 * **Exercise definition**: assigned reps @ RPE × sets for a lift
   (e.g. Bench 4@7×3). Entered via structured pickers (lift / reps / RPE / sets),
   not text parsing.
@@ -67,8 +67,9 @@ conflicts with SPEC.md, this document wins.
 
 ## Settings
 
-* Lift list showing each lift's increment; tap to edit the increment
-  (spinner, 0-25lb in 2.5 steps). Add-lift button.
+* Lift-increment settings show the +5lb default and only lifts with an
+  explicit override. Add, edit, and remove overrides (spinner, 0-25lb in
+  2.5 steps). Add-lift button.
 * No lift rename/delete in v1 (delete is blocked by exercise history;
   rename raises data-identity questions).
 * Backup/Restore buttons live here, disabled until the server exists.

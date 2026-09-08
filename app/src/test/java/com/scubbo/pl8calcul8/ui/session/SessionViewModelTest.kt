@@ -53,6 +53,16 @@ class SessionViewModelTest {
     }
 
     @Test
+    fun `advised weight uses the default increment when a lift has no override`() = runTest {
+        val squat = Lift(id = 2, name = "Squat")
+        seedHistory(squat, weightLb = 200.0, reps = 5, rpe = 8.0)
+
+        vm.addExercise(squat, reps = 4, rpe = 7.0, sets = 3)
+
+        assertEquals(205.0, vm.planned.value.single().advisedWeightLb!!, 1e-9)
+    }
+
+    @Test
     fun `adding an exercise with no history has no advised weight`() = runTest {
         val newLift = Lift(id = 3, name = "Front Squat", incrementLb = 5.0)
 
@@ -105,7 +115,7 @@ class SessionViewModelTest {
         val created = vm.addLift("  Front Squat ")
 
         assertEquals("Front Squat", created.name)
-        assertEquals(5.0, created.incrementLb, 1e-9)
+        assertEquals(null, created.incrementLb)
         val stored = liftDao.lifts.value.single()
         assertEquals(created.id, stored.id)
         assertEquals("Front Squat", stored.name)

@@ -20,7 +20,7 @@ data class BackupPayload(
 data class BackupLift(
     val id: Long,
     val name: String,
-    val incrementLb: Double,
+    val incrementLb: Double? = null,
 )
 
 @Serializable

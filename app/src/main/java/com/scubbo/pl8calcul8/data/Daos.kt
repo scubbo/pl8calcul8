@@ -15,7 +15,7 @@ interface LiftDao {
     fun all(): Flow<List<Lift>>
 
     @Query("UPDATE Lift SET incrementLb = :incrementLb WHERE id = :liftId")
-    suspend fun updateIncrement(liftId: Long, incrementLb: Double)
+    suspend fun updateIncrement(liftId: Long, incrementLb: Double?)
 
     @Query("SELECT * FROM Lift")
     suspend fun dump(): List<Lift>

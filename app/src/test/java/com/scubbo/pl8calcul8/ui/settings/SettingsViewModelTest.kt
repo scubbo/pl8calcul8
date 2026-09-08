@@ -32,7 +32,7 @@ class SettingsViewModelTest {
         val created = vm.addLift(" Incline Bench ")
 
         assertEquals("Incline Bench", created.name)
-        assertEquals(5.0, created.incrementLb, 1e-9)
+        assertEquals(null, created.incrementLb)
         assertEquals(created, liftDao.lifts.value.single())
     }
 
@@ -43,7 +43,7 @@ class SettingsViewModelTest {
 
         vm.setIncrement(liftDao.lifts.value.single(), 10.0)
 
-        assertEquals(10.0, liftDao.lifts.value.single { it.id == id }.incrementLb, 1e-9)
+        assertEquals(10.0, liftDao.lifts.value.single { it.id == id }.incrementLb!!, 1e-9)
     }
 
     @Test
@@ -76,7 +76,7 @@ class SettingsViewModelTest {
         val payload = api.uploaded!!
         assertEquals(1, payload.lifts.size)
         assertEquals("Squat", payload.lifts[0].name)
-        assertEquals(10.0, payload.lifts[0].incrementLb, 1e-9)
+        assertEquals(10.0, payload.lifts[0].incrementLb!!, 1e-9)
         assertEquals(1, payload.workouts.size)
         assertEquals(1, payload.exercises.size)
         assertEquals("hard", payload.exercises[0].notes)
