@@ -8,6 +8,7 @@ class FakeLiftDao : LiftDao {
     private var nextId = 1L
 
     override suspend fun insert(lift: Lift): Long {
+        if (lifts.value.any { it.name == lift.name }) return -1
         val id = nextId++
         lifts.value += lift.copy(id = id)
         return id
@@ -24,6 +25,8 @@ class FakeLiftDao : LiftDao {
     override suspend fun dump(): List<Lift> = lifts.value
 
     override suspend fun byId(id: Long): Lift? = lifts.value.find { it.id == id }
+
+    override suspend fun byName(name: String): Lift? = lifts.value.find { it.name == name }
 
     override suspend fun deleteAll() {
         lifts.value = emptyList()

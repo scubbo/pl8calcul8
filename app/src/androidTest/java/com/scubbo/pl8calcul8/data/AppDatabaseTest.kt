@@ -38,6 +38,16 @@ class AppDatabaseTest {
     }
 
     @Test
+    fun creatingAnExistingLiftReturnsTheExistingLift() = runBlocking {
+        val original = db.liftDao().createLift("Bench Press")
+
+        val duplicate = db.liftDao().createLift("  Bench Press ")
+
+        assertEquals(original, duplicate)
+        assertEquals(1, db.liftDao().all().first().size)
+    }
+
+    @Test
     fun mostRecentExerciseIsNullWithNoHistory() = runBlocking {
         val liftId = db.liftDao().insert(Lift(name = "Squat"))
         assertNull(db.workoutDao().mostRecentExerciseForLift(liftId))

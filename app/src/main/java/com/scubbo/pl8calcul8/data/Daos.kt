@@ -2,13 +2,14 @@ package com.scubbo.pl8calcul8.data
 
 import androidx.room.Dao
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface LiftDao {
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(lift: Lift): Long
 
     @Query("SELECT * FROM Lift ORDER BY name")
@@ -22,6 +23,9 @@ interface LiftDao {
 
     @Query("SELECT * FROM Lift WHERE id = :id")
     suspend fun byId(id: Long): Lift?
+
+    @Query("SELECT * FROM Lift WHERE name = :name")
+    suspend fun byName(name: String): Lift?
 
     @Query("DELETE FROM Lift")
     suspend fun deleteAll()
@@ -48,7 +52,8 @@ interface DraftDao {
 /** Creates a lift with the default increment, returning it with its new id. */
 suspend fun LiftDao.createLift(name: String): Lift {
     val lift = Lift(name = name.trim())
-    return lift.copy(id = insert(lift))
+    val id = insert(lift)
+    return if (id == -1L) byName(lift.name)!! else lift.copy(id = id)
 }
 
 /** One row of a lift's history: a completed exercise with its workout date. */
