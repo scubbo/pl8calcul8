@@ -24,10 +24,11 @@ conflicts with SPEC.md, this document wins.
 
 * Ratio table: the RTS/Tuchscherer RPE chart (percentage of e1RM by
   rep-count × RPE, half-integer RPEs supported). Jack verified the embedded
-  table against his copy. Extended with a derived RPE 6 column using the
-  reps-in-reserve diagonal (n@6 == (n+1)@7); 12@6 extrapolated to 57.4%.
+  table against his copy. Columns below RPE 6.5 use the reps-in-reserve
+  diagonal (n@r == (n+1)@(r+1)); the 12-rep row extrapolates by 1.2
+  percentage points per half-step down to 12@5 at 55.0%.
 * Assigned RPE (exercise definitions): whole numbers 6-10 only.
-* Recorded RPE (results): half-steps 6.5-10.
+* Recorded RPE (results): half-steps 5-10.
 * Advice input: the single recorded weight/RPE of the most recent completed
   exercise for that lift.
 * Advice algorithm:
