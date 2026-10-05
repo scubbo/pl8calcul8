@@ -194,9 +194,10 @@ whether his current token stays track "default" or re-keys as "jack").
 
 ## Design decisions (full detail in REQUIREMENTS.md)
 
-* RPE chart embedded in `RpeCalculator.kt`, verified by Jack; RPE 6 column
-  derived via diagonal, 12@6 extrapolated 57.4%.
-* Assigned RPE integers 6-10; recorded RPE half-steps 6.5-10.
+* RPE chart embedded in `RpeCalculator.kt`, verified by Jack; columns below
+  RPE 6.5 derived via diagonal, 12-rep row extrapolated by 1.2 percentage
+  points per half-step down to 12@5 at 55.0%.
+* Assigned RPE integers 6-10; recorded RPE half-steps 5-10.
 * Weight advice: most recent exercise -> e1RM -> target + per-lift
   increment -> round to nearest 5, ties down.
 * Exercise = one weight+RPE per exercise (not per set); reps assumed

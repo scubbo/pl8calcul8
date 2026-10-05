@@ -49,7 +49,7 @@ import kotlinx.coroutines.launch
 
 private val ASSIGNED_RPE_OPTIONS: List<Double> = (6..10).map { it.toDouble() }
 private val RECORDED_RPE_OPTIONS: List<Double> =
-    generateSequence(6.5) { it + 0.5 }.takeWhile { it <= RpeChart.MAX_RPE }.toList()
+    generateSequence(RpeChart.MIN_RPE) { it + 0.5 }.takeWhile { it <= RpeChart.MAX_RPE }.toList()
 private val REP_OPTIONS: List<Int> = (RpeChart.MIN_REPS..RpeChart.MAX_REPS).toList()
 private val SET_OPTIONS: List<Int> = (1..10).toList()
 private val WEIGHT_OPTIONS: List<Double> =
@@ -282,7 +282,6 @@ private fun RecordResultForm(
         mutableStateOf(nearestWeightOption(initialWeight ?: DEFAULT_BAR_WEIGHT))
     }
     var rpe by remember {
-        // The assignment can be RPE 6 but recording starts at 6.5
         mutableStateOf(initialRpe.coerceIn(RECORDED_RPE_OPTIONS.first(), RECORDED_RPE_OPTIONS.last()))
     }
     var notes by remember { mutableStateOf(initialNotes) }

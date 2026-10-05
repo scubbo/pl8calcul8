@@ -33,6 +33,25 @@ class RpeChartTest {
     }
 
     @Test
+    fun `RPE 5 and 5 point 5 follow the reps-in-reserve diagonal`() {
+        for (reps in 1..11) {
+            for (rpe in listOf(5.0, 5.5)) {
+                assertEquals(
+                    RpeChart.percentage(reps = reps + 1, rpe = rpe + 1),
+                    RpeChart.percentage(reps = reps, rpe = rpe),
+                    1e-9,
+                )
+            }
+        }
+    }
+
+    @Test
+    fun `12 rep low RPE percentages extend the half-step slope`() {
+        assertEquals(0.562, RpeChart.percentage(reps = 12, rpe = 5.5), 1e-9)
+        assertEquals(0.550, RpeChart.percentage(reps = 12, rpe = 5.0), 1e-9)
+    }
+
+    @Test
     fun `reps outside 1-12 are rejected`() {
         assertThrows(IllegalArgumentException::class.java) {
             RpeChart.percentage(reps = 0, rpe = 8.0)
@@ -43,9 +62,9 @@ class RpeChartTest {
     }
 
     @Test
-    fun `RPE outside 6-10 or off the half-step grid is rejected`() {
+    fun `RPE outside 5-10 or off the half-step grid is rejected`() {
         assertThrows(IllegalArgumentException::class.java) {
-            RpeChart.percentage(reps = 5, rpe = 5.5)
+            RpeChart.percentage(reps = 5, rpe = 4.5)
         }
         assertThrows(IllegalArgumentException::class.java) {
             RpeChart.percentage(reps = 5, rpe = 10.5)
@@ -61,6 +80,30 @@ class RpeCalculatorTest {
     fun `estimated 1RM from a completed exercise`() {
         // 200lb x5 @ RPE 8 -> 81.1% of 1RM -> e1RM = 200 / 0.811
         assertEquals(246.61, RpeCalculator.estimateOneRepMax(weightLb = 200.0, reps = 5, rpe = 8.0), 0.01)
+    }
+
+    @Test
+    fun `estimated 1RM from results at RPE 5 and 5 point 5`() {
+        assertEquals(200.0 / 0.739, RpeCalculator.estimateOneRepMax(weightLb = 200.0, reps = 5, rpe = 5.0), 1e-9)
+        assertEquals(200.0 / 0.751, RpeCalculator.estimateOneRepMax(weightLb = 200.0, reps = 5, rpe = 5.5), 1e-9)
+    }
+
+    @Test
+    fun `weight advice uses results at RPE 5 and 5 point 5`() {
+        for ((rpe, expectedWeight) in listOf(5.0 to 225.0, 5.5 to 220.0)) {
+            assertEquals(
+                expectedWeight,
+                RpeCalculator.adviseWeight(
+                    previousWeightLb = 200.0,
+                    previousReps = 5,
+                    previousRpe = rpe,
+                    assignedReps = 5,
+                    assignedRpe = 8.0,
+                    incrementLb = 5.0,
+                ),
+                1e-9,
+            )
+        }
     }
 
     @Test
